@@ -1,0 +1,45 @@
+# ==============================================================================
+# DEPLOYMENT MODE 2 VM: DOCKER COMPOSE KHUSUS VM-2 (DATABASE SERVER)
+# ==============================================================================
+# Gunakan file ini di VM Database:
+# docker compose -f docker-compose.db.yml up -d
+#
+# Catatan Keamanan:
+# - Port 3306 HANYA dibind ke IP Private VM / VPN internal bank, BUKAN 0.0.0.0
+# - Ubah DB_BIND_IP di .env ke IP Private VM-2 (misal: 10.10.10.5)
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: agunan-mysql-standalone
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in the ignored .env file}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-db_analisa_agunan}
+      MYSQL_USER: ${MYSQL_USER:-agunan_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in the ignored .env file}
+    ports:
+      # Hanya diekspos ke IP private internal VM-2
+      - "${DB_BIND_IP:-127.0.0.1}:3306:3306"
+    volumes:
+      - mysql_data_standalone:/var/lib/mysql
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=2G
+      --innodb-log-file-size=256M
+      --max_connections=500
+      --bind-address=0.0.0.0
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER:-agunan_user}", "-p${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in the ignored .env file}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data_standalone:
+    driver: local
