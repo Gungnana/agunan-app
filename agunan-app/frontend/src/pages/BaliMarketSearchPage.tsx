@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { AlertCircle, ExternalLink, MapPin, Search, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertCircle, ExternalLink, MapPin, Search, Sparkles, ChevronDown, ChevronUp, Calculator, ShieldCheck } from 'lucide-react';
 import { marketSearchApi, MarketSearchResult } from '../api/marketSearch';
+import { BceCalculator, EvaluatedComparableItem } from '../components/BceCalculator';
 
 const baliBounds: [[number, number], [number, number]] = [[-9.0, 114.3], [-8.0, 115.9]];
 
@@ -37,6 +38,7 @@ export const BaliMarketSearchPage: React.FC = () => {
   const [lon, setLon] = useState(115.2167);
   const [landType, setLandType] = useState('tanah_kosong');
   const [landShape, setLandShape] = useState('persegi');
+  const [collateralAreaM2, setCollateralAreaM2] = useState<number>(200);
   const [result, setResult] = useState<MarketSearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -238,6 +240,24 @@ export const BaliMarketSearchPage: React.FC = () => {
               </select>
             </label>
           </div>
+          <label className="block text-xs font-semibold text-slate-600">
+            Luas tanah agunan yang dinilai (m²)
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={collateralAreaM2}
+                onChange={(e) => setCollateralAreaM2(Math.max(1, Number(e.target.value)))}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900"
+                placeholder="Contoh: 200"
+              />
+              <span className="text-xs font-bold text-slate-500">m²</span>
+            </div>
+            <span className="mt-1 block text-[11px] font-normal text-slate-400">
+              Setara {(collateralAreaM2 / 100).toFixed(2)} are — digunakan untuk perhitungan estimasi total nilai agunan dan BCE
+            </span>
+          </label>
           <button type="submit" disabled={isSearching} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
             <Search className="h-4 w-4" /> {isSearching ? 'Mencari referensi…' : 'Cari harga tanah sekitar'}
           </button>
@@ -271,55 +291,55 @@ export const BaliMarketSearchPage: React.FC = () => {
           </div>
           {result.references.length ? <>
             <div className="grid gap-3 md:grid-cols-2">
-            {result.references.slice(0, showAllReferences ? result.references.length : 4).map((reference, index) => (
-              <article key={`${reference.url}-${index}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-blue-700">{reference.source}{reference.url.toLowerCase().includes('facebook.com') ? ' • hasil publik Facebook' : ''}{reference.reference_kind === 'individual_listing' ? ' • halaman detail properti' : ' • halaman pencarian umum'}</div>
-                <h3 className="font-bold leading-snug text-slate-900">{reference.title}</h3>
-                <span className="mt-2 inline-flex rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">Ditemukan lewat kueri {reference.matched_locality_level}: {reference.matched_locality_area}</span>
-                {reference.price_mentions.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{reference.price_mentions.slice(0, 3).map((price, priceIndex) => <span key={`${price}-${priceIndex}`} className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">{price.trim()}</span>)}</div>}
-                <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-slate-600">{reference.description || 'Buka halaman sumber untuk melihat rincian penawaran.'}</p>
-                {(reference.comparison_data.property_type || reference.comparison_data.address || reference.comparison_data.width_m || reference.comparison_data.dimensions_m || reference.comparison_data.facing || reference.comparison_data.road_access || reference.comparison_data.zoning || reference.comparison_data.listing_description || reference.comparison_data.nearby.length > 0) && <details className="mt-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3">
-                  <summary className="cursor-pointer text-xs font-bold text-blue-900">Rincian tambahan dari halaman referensi</summary>
-                  <dl className="mt-2 grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
-                    {reference.comparison_data.property_type && <div><dt className="font-semibold text-slate-500">Jenis properti</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.property_type}</dd></div>}
-                    {reference.comparison_data.address && <div className="sm:col-span-2"><dt className="font-semibold text-slate-500">Alamat pada listing</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.address}</dd></div>}
-                    {reference.comparison_data.width_m && <div><dt className="font-semibold text-slate-500">Lebar tanah</dt><dd className="mt-0.5 text-slate-800">± {reference.comparison_data.width_m} m</dd></div>}
-                    {reference.comparison_data.dimensions_m && <div><dt className="font-semibold text-slate-500">Dimensi bidang</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.dimensions_m}</dd></div>}
-                    {reference.comparison_data.facing && <div><dt className="font-semibold text-slate-500">Arah hadap</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.facing}</dd></div>}
-                    {reference.comparison_data.road_access && <div><dt className="font-semibold text-slate-500">Akses</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.road_access}</dd></div>}
-                    {reference.comparison_data.zoning && <div><dt className="font-semibold text-slate-500">Zonasi / ITR</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.zoning}</dd></div>}
-                    {reference.comparison_data.nearby.length > 0 && <div className="sm:col-span-2"><dt className="font-semibold text-slate-500">Keterangan jarak / fasilitas sekitar</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.nearby.join(' • ')}</dd></div>}
-                    {reference.comparison_data.listing_description && <div className="sm:col-span-2"><dt className="font-semibold text-slate-500">Deskripsi halaman sumber</dt><dd className="mt-0.5 line-clamp-5 whitespace-pre-line text-slate-700">{reference.comparison_data.listing_description}</dd></div>}
-                  </dl>
-                  <p className="mt-2 text-[10px] text-slate-400">{reference.comparison_data.page_enriched ? 'Dibaca dari halaman detail properti.' : 'Informasi tambahan terbatas pada metadata yang terindeks mesin pencari.'}</p>
-                </details>}
-                <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Luas</p>
-                    <p className="mt-1 text-xs font-bold text-slate-800">{reference.area_m2 !== null ? `${reference.area_m2.toLocaleString('id-ID')} m²` : 'Tidak tercantum'}</p>
+              {result.references.slice(0, showAllReferences ? result.references.length : 4).map((reference, index) => (
+                <article key={`${reference.url}-${index}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-blue-700">{reference.source}{reference.url.toLowerCase().includes('facebook.com') ? ' • hasil publik Facebook' : ''}{reference.reference_kind === 'individual_listing' ? ' • halaman detail properti' : ' • halaman pencarian umum'}</div>
+                  <h3 className="font-bold leading-snug text-slate-900">{reference.title}</h3>
+                  <span className="mt-2 inline-flex rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">Ditemukan lewat kueri {reference.matched_locality_level}: {reference.matched_locality_area}</span>
+                  {reference.price_mentions.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{reference.price_mentions.slice(0, 3).map((price, priceIndex) => <span key={`${price}-${priceIndex}`} className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">{price.trim()}</span>)}</div>}
+                  <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-slate-600">{reference.description || 'Buka halaman sumber untuk melihat rincian penawaran.'}</p>
+                  {(reference.comparison_data.property_type || reference.comparison_data.address || reference.comparison_data.width_m || reference.comparison_data.dimensions_m || reference.comparison_data.facing || reference.comparison_data.road_access || reference.comparison_data.zoning || reference.comparison_data.listing_description || reference.comparison_data.nearby.length > 0) && <details className="mt-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3">
+                    <summary className="cursor-pointer text-xs font-bold text-blue-900">Rincian tambahan dari halaman referensi</summary>
+                    <dl className="mt-2 grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
+                      {reference.comparison_data.property_type && <div><dt className="font-semibold text-slate-500">Jenis properti</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.property_type}</dd></div>}
+                      {reference.comparison_data.address && <div className="sm:col-span-2"><dt className="font-semibold text-slate-500">Alamat pada listing</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.address}</dd></div>}
+                      {reference.comparison_data.width_m && <div><dt className="font-semibold text-slate-500">Lebar tanah</dt><dd className="mt-0.5 text-slate-800">± {reference.comparison_data.width_m} m</dd></div>}
+                      {reference.comparison_data.dimensions_m && <div><dt className="font-semibold text-slate-500">Dimensi bidang</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.dimensions_m}</dd></div>}
+                      {reference.comparison_data.facing && <div><dt className="font-semibold text-slate-500">Arah hadap</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.facing}</dd></div>}
+                      {reference.comparison_data.road_access && <div><dt className="font-semibold text-slate-500">Akses</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.road_access}</dd></div>}
+                      {reference.comparison_data.zoning && <div><dt className="font-semibold text-slate-500">Zonasi / ITR</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.zoning}</dd></div>}
+                      {reference.comparison_data.nearby.length > 0 && <div className="sm:col-span-2"><dt className="font-semibold text-slate-500">Keterangan jarak / fasilitas sekitar</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.nearby.join(' • ')}</dd></div>}
+                      {reference.comparison_data.listing_description && <div className="sm:col-span-2"><dt className="font-semibold text-slate-500">Deskripsi halaman sumber</dt><dd className="mt-0.5 line-clamp-5 whitespace-pre-line text-slate-700">{reference.comparison_data.listing_description}</dd></div>}
+                    </dl>
+                    <p className="mt-2 text-[10px] text-slate-400">{reference.comparison_data.page_enriched ? 'Dibaca dari halaman detail properti.' : 'Informasi tambahan terbatas pada metadata yang terindeks mesin pencari.'}</p>
+                  </details>}
+                  <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Luas</p>
+                      <p className="mt-1 text-xs font-bold text-slate-800">{reference.area_m2 !== null ? `${reference.area_m2.toLocaleString('id-ID')} m²` : 'Tidak tercantum'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{reference.total_price_is_estimate ? 'Harga tanah (estimasi)' : 'Harga tanah'}</p>
+                      <p className="mt-1 text-xs font-bold text-slate-800">{reference.total_price !== null ? formatRupiah(reference.total_price) : 'Tidak tercantum'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Harga / are</p>
+                      <p className="mt-1 text-xs font-bold text-blue-800">{reference.price_per_are !== null ? formatRupiah(reference.price_per_are) : 'Tidak tercantum'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{reference.total_price_is_estimate ? 'Harga tanah (estimasi)' : 'Harga tanah'}</p>
-                    <p className="mt-1 text-xs font-bold text-slate-800">{reference.total_price !== null ? formatRupiah(reference.total_price) : 'Tidak tercantum'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Harga / are</p>
-                    <p className="mt-1 text-xs font-bold text-blue-800">{reference.price_per_are !== null ? formatRupiah(reference.price_per_are) : 'Tidak tercantum'}</p>
-                  </div>
-                </div>
-                {reference.summary_note && <p className="mt-1 text-[10px] text-slate-400">{reference.summary_note}</p>}
-                <a href={reference.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 hover:text-blue-900">Lihat harga dan detail sumber <ExternalLink className="h-3.5 w-3.5" /></a>
-                <button
-                  type="button"
-                  disabled={!selectedReferenceUrls.includes(reference.url) && selectedReferenceUrls.length >= 3}
-                  onClick={() => toggleReference(reference.url)}
-                  className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold transition ${selectedReferenceUrls.includes(reference.url) ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-700'} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400`}
-                  title={!selectedReferenceUrls.includes(reference.url) && selectedReferenceUrls.length >= 3 ? 'Maksimal pilih 3 referensi' : undefined}
-                >
-                  {selectedReferenceUrls.includes(reference.url) ? '✓ Referensi dipilih' : 'Pilih untuk penilaian jarak'}
-                </button>
-              </article>
-            ))}
+                  {reference.summary_note && <p className="mt-1 text-[10px] text-slate-400">{reference.summary_note}</p>}
+                  <a href={reference.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 hover:text-blue-900">Lihat harga dan detail sumber <ExternalLink className="h-3.5 w-3.5" /></a>
+                  <button
+                    type="button"
+                    disabled={!selectedReferenceUrls.includes(reference.url) && selectedReferenceUrls.length >= 3}
+                    onClick={() => toggleReference(reference.url)}
+                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold transition ${selectedReferenceUrls.includes(reference.url) ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-700'} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400`}
+                    title={!selectedReferenceUrls.includes(reference.url) && selectedReferenceUrls.length >= 3 ? 'Maksimal pilih 3 referensi' : undefined}
+                  >
+                    {selectedReferenceUrls.includes(reference.url) ? '✓ Referensi dipilih' : 'Pilih untuk penilaian jarak'}
+                  </button>
+                </article>
+              ))}
             </div>
             {result.references.length > 4 && <button type="button" onClick={() => setShowAllReferences((shown) => !shown)} className="mx-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-700">
               {showAllReferences ? <><ChevronUp className="h-4 w-4" /> Tampilkan lebih sedikit</> : <><ChevronDown className="h-4 w-4" /> Tampilkan semua {result.references.length} referensi</>}
@@ -390,9 +410,19 @@ export const BaliMarketSearchPage: React.FC = () => {
             </div>
             {allDistancesValid && adjustedAveragePerAre !== null ? (
               <div className="mt-4 rounded-xl border border-violet-200 bg-white p-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-violet-800">Indikasi rata-rata setelah faktor jarak dari {pricedEvaluations.length} referensi yang memiliki harga</p>
-                <p className="mt-1 text-xl font-black text-slate-900">{formatRupiah(adjustedAveragePerAre)} / are</p>
-                <p className="text-sm font-bold text-emerald-700">{formatRupiah(Math.round(adjustedAveragePerAre / 100))} / m²</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-violet-800">Indikasi rata-rata setelah faktor jarak dari {pricedEvaluations.length} referensi yang memiliki harga</p>
+                    <p className="mt-1 text-xl font-black text-slate-900">{formatRupiah(adjustedAveragePerAre)} / are</p>
+                    <p className="text-sm font-bold text-emerald-700">{formatRupiah(Math.round(adjustedAveragePerAre / 100))} / m²</p>
+                  </div>
+                  <a
+                    href="#bce-section"
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-600/20 transition hover:from-emerald-700 hover:to-teal-700"
+                  >
+                    <Calculator className="h-4 w-4" /> Buka Perhitungan BCE Agunan ↓
+                  </a>
+                </div>
                 {pricedEvaluations.length < 3 && <p className="mt-2 text-xs text-amber-700">Rata-rata harga memakai {pricedEvaluations.length} referensi yang memiliki harga per are, termasuk input manual bila ada. Referensi tanpa harga tetap dinilai faktor jaraknya.</p>}
               </div>
             ) : allDistancesValid ? (
@@ -408,6 +438,30 @@ export const BaliMarketSearchPage: React.FC = () => {
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500">Faktor diterapkan dengan mengalikan harga sumber (contoh: harga × 95%). Jarak tidak tersedia secara andal dari hasil web, jadi masukkan jarak hasil ukur/verifikasi user. Jarak di atas 1 km tidak masuk tabel acuan.</p>
             </details>
           </section>
+
+          {/* Sistem Perhitungan Bank Conservative Evaluation (BCE) */}
+          <BceCalculator
+            averagePricePerAre={adjustedAveragePerAre}
+            averagePricePerM2={adjustedAveragePerAre !== null ? Math.round(adjustedAveragePerAre / 100) : null}
+            comparables={evaluatedReferences.map((item) => ({
+              referenceTitle: item.reference.title,
+              url: item.reference.url,
+              address: item.draft?.address || item.reference.matched_locality_area,
+              propertyType: item.draft?.propertyType || item.reference.comparison_data.property_type || 'Tanah',
+              sourceName: item.draft?.sourceName || item.reference.source,
+              distanceMeters: item.factor !== null ? item.distance : null,
+              discountFactor: item.factor,
+              areaM2: item.draft?.areaM2 ? Number(item.draft.areaM2) : null,
+              offerPrice: item.effectiveOfferPrice,
+              discountedOfferPrice: item.discountedOfferPrice,
+              discountedPricePerM2: item.discountedPricePerM2,
+              adjustedPricePerAre: item.adjustedPricePerAre,
+            }))}
+            collateralAreaM2={collateralAreaM2}
+            onCollateralAreaChange={setCollateralAreaM2}
+            collateralLocationName={result.location.display_name}
+            collateralCoordinates={{ lat, lon }}
+          />
           <section aria-labelledby="area-context-heading" className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
