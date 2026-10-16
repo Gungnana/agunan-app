@@ -3,8 +3,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from app.core.config import settings
 
-db_url = settings.DATABASE_URL or "sqlite:///./db_analisa_agunan.db"
-if db_url.startswith("postgres://"):
+import tempfile
+
+db_url = settings.DATABASE_URL or ""
+if not db_url or "sqlite" in db_url:
+    # Pada Vercel/serverless, folder root bersifat read-only sehingga sqlite harus ditulis ke /tmp
+    db_url = f"sqlite:///{tempfile.gettempdir()}/db_analisa_agunan.db"
+elif db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
 elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
