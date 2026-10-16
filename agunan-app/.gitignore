@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+!.env.production.example
 .vercel
 node_modules/
 frontend/dist/

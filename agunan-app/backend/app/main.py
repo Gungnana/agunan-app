@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.router import api_router
@@ -38,6 +38,29 @@ def health_check():
         "version": settings.APP_VERSION,
         "environment": settings.APP_ENV,
     }
+
+
+@app.get("/setup-db", tags=["Sistem"])
+@app.post("/setup-db", tags=["Sistem"])
+def setup_database(secret: str):
+    """Endpoint sekali pakai untuk inisialisasi tabel Supabase & akun awal."""
+    if not settings.SECRET_KEY or secret != settings.SECRET_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="Akses ditolak: parameter secret tidak cocok dengan SECRET_KEY di environment.",
+        )
+    try:
+        from app.db.init_db import init_database
+        init_database()
+        return {
+            "status": "SUCCESS",
+            "message": "Inisialisasi tabel dan akun awal Supabase berhasil dijalankan!",
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gagal melakukan inisialisasi database: {str(e)}",
+        )
 
 
 @app.get("/", tags=["Sistem"])
