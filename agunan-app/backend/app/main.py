@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.router import api_router
@@ -101,4 +101,15 @@ def root():
         "pesan": "Selamat datang di Sistem Analisa Agunan Berbasis Data Pasar",
         "dokumentasi": "/docs",
         "api_v1": "/api/v1",
+    }
+
+
+@app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+def debug_catch_all(full_path: str, request: Request):
+    """Debug route jika rute lain tidak cocok."""
+    return {
+        "status": "CATCH_ALL",
+        "matched_param": full_path,
+        "scope_path": request.scope.get("path"),
+        "headers": dict(request.headers),
     }
