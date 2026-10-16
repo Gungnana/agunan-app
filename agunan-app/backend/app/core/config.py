@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./db_analisa_agunan.db"
 
     # pencarian web melalui Brave Search API.
-    BRAVE_SEARCH_API_KEY: str = ""
+    BRAVE_SEARCH_API_KEY: str = "BSAdpcrAFpA-ae5TqkyP5rJIMcgxwni"
 
     # Default Initial Accounts
     INITIAL_ADMIN_USERNAME: str = "admin"
