@@ -30,6 +30,7 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["Sistem"])
+@app.get("/api/health", tags=["Sistem"])
 def health_check():
     """Endpoint pemeriksaan kesehatan layanan (Liveness / Readiness Probe)."""
     return {
@@ -42,6 +43,8 @@ def health_check():
 
 @app.get("/setup-db", tags=["Sistem"])
 @app.post("/setup-db", tags=["Sistem"])
+@app.get("/api/setup-db", tags=["Sistem"])
+@app.post("/api/setup-db", tags=["Sistem"])
 def setup_database(secret: str):
     """Endpoint sekali pakai untuk inisialisasi tabel Supabase & akun awal."""
     if not settings.SECRET_KEY or secret != settings.SECRET_KEY:
@@ -64,6 +67,8 @@ def setup_database(secret: str):
 
 
 @app.get("/", tags=["Sistem"])
+@app.get("/api", tags=["Sistem"])
+@app.get("/api/", tags=["Sistem"])
 def root():
     """Halaman pengantar API Backend."""
     return {

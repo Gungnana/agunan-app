@@ -20,8 +20,27 @@ except Exception as e:
     def err_handler(path: str = ""):
         return PlainTextResponse(f"Startup Error:\n\n{error_trace}", status_code=500)
 
+class VercelPathMiddleware:
+    """Memperbaiki path URL asli dari header Vercel x-matched-path."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            headers = dict(scope.get("headers", []))
+            matched_path = headers.get(b"x-matched-path")
+            if matched_path:
+                scope["path"] = matched_path.decode("utf-8").split("?")[0]
+            else:
+                path = scope.get("path", "")
+                if path.startswith("/api/index.py"):
+                    scope["path"] = path[len("/api/index.py"):] or "/"
+        await self.app(scope, receive, send)
+
+wrapped_app = VercelPathMiddleware(app)
+
 try:
     from mangum import Mangum
-    handler = Mangum(app, lifespan="off")
+    handler = Mangum(wrapped_app, lifespan="off")
 except Exception:
-    handler = app
+    handler = wrapped_app

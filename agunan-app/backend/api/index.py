@@ -2,7 +2,6 @@ import sys
 import os
 import traceback
 
-# Pastikan root folder backend terdaftar di Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
@@ -14,10 +13,6 @@ try:
     from app.main import app
 except Exception as e:
     error_trace = traceback.format_exc()
-    print("=== STARTUP ERROR ===")
-    print(error_trace)
-    
-    # Fallback app untuk menampilkan error langsung di browser ketimbang layar hitam Vercel
     from fastapi import FastAPI
     from fastapi.responses import PlainTextResponse
     
@@ -30,9 +25,27 @@ except Exception as e:
             status_code=500,
         )
 
-# Export handler untuk serverless wrapper
+class VercelPathMiddleware:
+    """Memperbaiki path URL asli dari header Vercel x-matched-path."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            headers = dict(scope.get("headers", []))
+            matched_path = headers.get(b"x-matched-path")
+            if matched_path:
+                scope["path"] = matched_path.decode("utf-8").split("?")[0]
+            else:
+                path = scope.get("path", "")
+                if path.startswith("/api/index.py"):
+                    scope["path"] = path[len("/api/index.py"):] or "/"
+        await self.app(scope, receive, send)
+
+wrapped_app = VercelPathMiddleware(app)
+
 try:
     from mangum import Mangum
-    handler = Mangum(app, lifespan="off")
+    handler = Mangum(wrapped_app, lifespan="off")
 except Exception:
-    handler = app
+    handler = wrapped_app
