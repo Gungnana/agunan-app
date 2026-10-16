@@ -9,11 +9,15 @@ export const apiClient = axios.create({
   },
 });
 
-// Interceptor untuk menyisipkan JWT Authorization Bearer
+// Interceptor untuk menyisipkan JWT Authorization Bearer dan x-api-path
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('agunan_token');
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  // Berikan header x-api-path agar backend Vercel serverless selalu mengetahui endpoint yang dituju
+  if (config.url && config.headers) {
+    config.headers['x-api-path'] = config.url;
   }
   return config;
 });
