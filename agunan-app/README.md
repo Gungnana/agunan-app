@@ -11,31 +11,69 @@ A React/Vite frontend searches publicly indexed Bali land listings using Brave S
 
 Never commit `.env`. Use unique production credentials; do not deploy the sample values from `.env.example`.
 
-## Hosting
+# Sistem Analisa Agunan Berbasis Data Pasar (Bali Land Market & BCE Calculator)
 
-Vercel hosts the static frontend only. The FastAPI backend and MySQL database require separate hosting; Docker Compose is not run by Vercel.
+Aplikasi perbankan untuk Analis Kredit dalam mengestimasi nilai pasar agunan tanah menggunakan pendekatan data pasar (*Market Data Approach*) sesuai Standar Penilaian Indonesia (SPI) dan menghitung skor Bank Conservative Evaluation (BCE).
 
-### Frontend on Vercel
+- **Frontend**: React 18, Vite, TailwindCSS, Leaflet Interactive Map, Lucide Icons.
+- **Backend**: FastAPI, SQLAlchemy, Mangum ASGI Serverless Wrapper, Pydantic v2.
+- **Data Pasar**: Brave Search API (mengambil referensi listing aktif tanah di area Bali dari Rumah123, Lamudi, dsb).
+- **Database**: PostgreSQL (Supabase Free Tier) atau MySQL / SQLite untuk pengembangan lokal.
+- **Hosting**: 100% Free Tier di Vercel (Frontend SPA + Backend Serverless Functions).
 
-1. Import this repository into Vercel.
-2. Set **Root Directory** to `frontend`.
-3. Use the Vite defaults: build command `npm run build`, output directory `dist`.
-4. Add the environment variable `VITE_API_BASE_URL` with the public backend URL ending in `/api/v1`, for example `https://your-api.example.com/api/v1`.
-5. Redeploy after changing environment variables.
+---
 
-The `frontend/vercel.json` file provides SPA route fallback.
+## 🚀 Panduan Menjalankan Secara Lokal
 
-### Backend and database
+### Menggunakan Docker Compose
+1. Salin `.env.example` ke `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Pastikan `BRAVE_SEARCH_API_KEY` terisi di `.env`.
+3. Jalankan container:
+   ```bash
+   docker compose up --build -d
+   ```
+4. Buka di browser: `http://localhost`.
 
-Deploy `backend/Dockerfile` on a container host that supports persistent services, and provision a managed MySQL 8 database. Configure these environment variables on the backend service:
+### Menjalankan Manual (Development)
+- **Backend**:
+  ```bash
+  cd agunan-app/backend
+  pip install -r requirements.txt
+  uvicorn app.main:app --reload --port 8000
+  ```
+- **Frontend**:
+  ```bash
+  cd agunan-app/frontend
+  bun install # atau npm install
+  bun run dev # atau npm run dev
+  ```
 
-- `APP_ENV=production`
-- `DATABASE_URL` for the managed MySQL database
-- `SECRET_KEY` as a unique random value of at least 32 characters
-- `CORS_ORIGINS` including the exact Vercel production domain (and preview domains only if needed)
-- `INITIAL_ADMIN_PASSWORD` and `INITIAL_ANALIS_PASSWORD` as unique credentials
-- `BRAVE_SEARCH_API_KEY`
+---
 
-Do not expose backend secrets as `VITE_*` variables; Vite variables are bundled into browser assets. The backend's `/health` route can be used for a health check.
+## ☁️ Arsitektur Hosting di Vercel
 
-The repository does not currently include a Vercel deployment token, GitHub remote, or configured CLI authentication. Create/connect the GitHub repository and authorize Vercel in their respective dashboards to complete hosted deployment.
+### 1. Backend Serverless (Vercel)
+- Entry point serverless berada di `/api/index.py` dengan konfigurasi routing pada `/vercel.json`.
+- Environment Variables utama pada Vercel Backend:
+  - `DATABASE_URL`: URI koneksi PostgreSQL Supabase (misal: `postgresql://postgres:...@...supabase.co:5432/postgres`).
+  - `SECRET_KEY`: String acak aman untuk token JWT.
+  - `BRAVE_SEARCH_API_KEY`: Kunci API Brave Search untuk pencarian harga pasar internet.
+  - `CORS_ORIGINS`: Domain frontend Vercel (misal: `https://agunan-app-1t8j.vercel.app`).
+
+### 2. Frontend SPA (Vercel)
+- Root directory: `agunan-app/frontend`.
+- Environment Variable:
+  - `VITE_API_BASE_URL`: URL backend Vercel publik (misal: `https://agunan-app-rhzi.vercel.app/api/v1`).
+
+---
+
+## 🔐 Akun Akses Default
+- **Analis Kredit**:
+  - Username: `analis1`
+  - Password: `AnalisBank2026!`
+- **Administrator**:
+  - Username: `admin`
+  - Password: `AdminBank2026!`

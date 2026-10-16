@@ -135,12 +135,3 @@ def root(request: Request):
     }
 
 
-@app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-def debug_catch_all(full_path: str, request: Request):
-    """Debug route jika rute lain tidak cocok."""
-    return {
-        "status": "CATCH_ALL",
-        "matched_param": full_path,
-        "scope_path": request.scope.get("path"),
-        "headers": dict(request.headers),
-    }
