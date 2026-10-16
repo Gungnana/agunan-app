@@ -95,12 +95,12 @@ def setup_database(secret: str):
 @app.get("/", tags=["Sistem"])
 @app.get("/api", tags=["Sistem"])
 @app.get("/api/", tags=["Sistem"])
-def root():
+def root(request: Request):
     """Halaman pengantar API Backend."""
     return {
         "pesan": "Selamat datang di Sistem Analisa Agunan Berbasis Data Pasar",
-        "dokumentasi": "/docs",
-        "api_v1": "/api/v1",
+        "headers": dict(request.headers),
+        "scope": {k: str(v) for k, v in request.scope.items() if k != "app"},
     }
 
 
