@@ -17,26 +17,41 @@ app = FastAPI(
 )
 
 class VercelPathFixASGIMiddleware:
-    """Memperbaiki path URL asli dari header Vercel x-matched-path sebelum router FastAPI memproses rute."""
+    """Memperbaiki path URL asli dari parameter __vercel_path__ atau header Vercel."""
     def __init__(self, app):
         self.app = app
 
     async def __call__(self, scope, receive, send):
         if scope["type"] in ("http", "websocket"):
-            headers = dict(scope.get("headers", []))
-            matched = (
-                headers.get(b"x-matched-path")
-                or headers.get(b"x-original-url")
-                or headers.get(b"x-rewrite-url")
-                or headers.get(b"x-forwarded-uri")
-            )
-            if matched:
-                parts = matched.decode("utf-8").split("?")
-                scope["path"] = parts[0]
-                if len(parts) > 1 and not scope.get("query_string"):
-                    scope["query_string"] = parts[1].encode("utf-8")
-            elif scope.get("path") in ("/api/index.py", "/api/index", "/api", ""):
-                scope["path"] = "/"
+            qs = scope.get("query_string", b"").decode("latin1")
+            
+            # 1. Cek parameter __vercel_path__ dari rewrite vercel.json
+            if "__vercel_path__=" in qs:
+                import urllib.parse
+                params = urllib.parse.parse_qs(qs, keep_blank_values=True)
+                if "__vercel_path__" in params:
+                    raw_path = params.pop("__vercel_path__")[0]
+                    if not raw_path.startswith("/"):
+                        raw_path = "/" + raw_path
+                    scope["path"] = raw_path
+                    new_qs = urllib.parse.urlencode(params, doseq=True)
+                    scope["query_string"] = new_qs.encode("latin1")
+            else:
+                headers = dict(scope.get("headers", []))
+                matched = (
+                    headers.get(b"x-matched-path")
+                    or headers.get(b"x-original-url")
+                    or headers.get(b"x-rewrite-url")
+                    or headers.get(b"x-forwarded-uri")
+                )
+                if matched:
+                    parts = matched.decode("utf-8").split("?")
+                    scope["path"] = parts[0]
+                    if len(parts) > 1 and not scope.get("query_string"):
+                        scope["query_string"] = parts[1].encode("utf-8")
+                elif scope.get("path") in ("/api/index.py", "/api/index", "/api", ""):
+                    scope["path"] = "/"
+
         await self.app(scope, receive, send)
 
 # Tambahkan ASGI Middleware Vercel
