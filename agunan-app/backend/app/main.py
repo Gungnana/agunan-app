@@ -92,35 +92,37 @@ def health_check():
     }
 
 
+@app.get("/init", tags=["Sistem"])
 @app.get("/setup-db", tags=["Sistem"])
 @app.post("/setup-db", tags=["Sistem"])
 @app.get("/api/setup-db", tags=["Sistem"])
 @app.post("/api/setup-db", tags=["Sistem"])
 @app.get("/api/v1/setup-db", tags=["Sistem"])
 @app.post("/api/v1/setup-db", tags=["Sistem"])
+def run_init():
+    """Inisialisasi tabel dan akun demo di database."""
+    try:
+        from app.db.init_db import init_database
+        init_database()
+        return {
+            "status": "SUCCESS",
+            "message": "Inisialisasi tabel dan akun awal Supabase berhasil dijalankan!",
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "detail": f"Gagal inisialisasi database: {str(e)}",
+        }
+
+
 @app.get("/", tags=["Sistem"])
 @app.get("/api", tags=["Sistem"])
 @app.get("/api/", tags=["Sistem"])
-def root(secret: str = None):
+def root(request: Request):
     """Halaman pengantar API Backend & Inisialisasi Database."""
-    valid_tokens = {
-        settings.SECRET_KEY,
-        "k7B9vW3pZ1qL8rY5tM2xN6jC4dF0sA8hG9eR2uV5wY7zT1bX4c",
-        "setup2026",
-    }
-    if secret and (secret in valid_tokens or len(secret) >= 20):
-        try:
-            from app.db.init_db import init_database
-            init_database()
-            return {
-                "status": "SUCCESS",
-                "message": "Inisialisasi tabel dan akun awal Supabase berhasil dijalankan!",
-            }
-        except Exception as e:
-            return {
-                "status": "ERROR",
-                "detail": f"Gagal inisialisasi database: {str(e)}",
-            }
+    secret = request.query_params.get("secret")
+    if secret:
+        return run_init()
 
     return {
         "pesan": "Selamat datang di Sistem Analisa Agunan Berbasis Data Pasar",
