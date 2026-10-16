@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Plus, Trash2, Building2, Calculator, Sparkles, Layers } from 'lucide-react';
 
 export interface EvaluatedComparableItem {
   referenceTitle: string;
@@ -13,6 +14,14 @@ export interface EvaluatedComparableItem {
   discountedOfferPrice: number | null;
   discountedPricePerM2: number | null;
   adjustedPricePerAre: number | null;
+}
+
+export interface BuildingItem {
+  id: string;
+  keterangan: string;
+  luasM2: number;
+  hargaPasarPerM2: number;
+  bcePercent: number;
 }
 
 export interface BceCalculatorProps {
@@ -44,6 +53,21 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
   const [lokasiJalanScore, setLokasiJalanScore] = useState<number>(2);
   const [kualitasTanahScore, setKualitasTanahScore] = useState<number>(3);
   const [marketableScore, setMarketableScore] = useState<number>(2);
+
+  // Manual override or synced values for Tanah row
+  const [manualTanahPricePerM2, setManualTanahPricePerM2] = useState<number | null>(null);
+  const [manualTanahBcePercent, setManualTanahBcePercent] = useState<number | null>(null);
+
+  // Bangunan items (user adds new building rows with keterangan, luas, harga pasar/m2, BCE manual)
+  const [buildings, setBuildings] = useState<BuildingItem[]>([
+    {
+      id: '1',
+      keterangan: 'Bangunan Lantai 1',
+      luasM2: 126,
+      hargaPasarPerM2: 4300000,
+      bcePercent: 75,
+    },
+  ]);
 
   const formatRupiah = (val: number | null | undefined): string => {
     if (val === null || val === undefined || isNaN(val)) return '—';
@@ -80,6 +104,83 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
     if (effectiveMarketPricePerM2 === null || collateralAreaM2 <= 0) return null;
     return Math.round(effectiveMarketPricePerM2 * collateralAreaM2);
   }, [effectiveMarketPricePerM2, collateralAreaM2]);
+
+  // Active price per m2 for Tanah (synced with comparables calculation unless overridden)
+  const activeTanahPricePerM2 = useMemo(() => {
+    if (manualTanahPricePerM2 !== null && manualTanahPricePerM2 > 0) {
+      return manualTanahPricePerM2;
+    }
+    return effectiveMarketPricePerM2 || 4800000;
+  }, [manualTanahPricePerM2, effectiveMarketPricePerM2]);
+
+  // Active BCE % for Tanah (synced with bcePercentage unless overridden)
+  const activeTanahBcePercent = useMemo(() => {
+    if (manualTanahBcePercent !== null && manualTanahBcePercent > 0) {
+      return manualTanahBcePercent;
+    }
+    return bcePercentage;
+  }, [manualTanahBcePercent, bcePercentage]);
+
+  const nilaiPasarTanah = useMemo(() => {
+    return Math.round((collateralAreaM2 || 0) * activeTanahPricePerM2);
+  }, [collateralAreaM2, activeTanahPricePerM2]);
+
+  const nilaiBceTanah = useMemo(() => {
+    return Math.round(nilaiPasarTanah * (activeTanahBcePercent / 100));
+  }, [nilaiPasarTanah, activeTanahBcePercent]);
+
+  const handleAddBuilding = () => {
+    const nextNumber = buildings.length + 1;
+    setBuildings((prev) => [
+      ...prev,
+      {
+        id: String(Date.now()),
+        keterangan: `Bangunan Lantai ${nextNumber}`,
+        luasM2: 100,
+        hargaPasarPerM2: 4000000,
+        bcePercent: bcePercentage,
+      },
+    ]);
+  };
+
+  const handleRemoveBuilding = (id: string) => {
+    setBuildings((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const handleUpdateBuilding = (
+    id: string,
+    field: keyof Omit<BuildingItem, 'id'>,
+    value: string | number
+  ) => {
+    setBuildings((prev) =>
+      prev.map((b) => {
+        if (b.id !== id) return b;
+        return { ...b, [field]: value };
+      })
+    );
+  };
+
+  const totalNilaiPasarBangunan = useMemo(() => {
+    return buildings.reduce(
+      (acc, b) => acc + Math.round((Number(b.luasM2) || 0) * (Number(b.hargaPasarPerM2) || 0)),
+      0
+    );
+  }, [buildings]);
+
+  const totalNilaiBceBangunan = useMemo(() => {
+    return buildings.reduce((acc, b) => {
+      const pasar = Math.round((Number(b.luasM2) || 0) * (Number(b.hargaPasarPerM2) || 0));
+      return acc + Math.round(pasar * ((Number(b.bcePercent) || 0) / 100));
+    }, 0);
+  }, [buildings]);
+
+  const grandTotalNilaiPasar = useMemo(() => {
+    return nilaiPasarTanah + totalNilaiPasarBangunan;
+  }, [nilaiPasarTanah, totalNilaiPasarBangunan]);
+
+  const grandTotalNilaiBce = useMemo(() => {
+    return nilaiBceTanah + totalNilaiBceBangunan;
+  }, [nilaiBceTanah, totalNilaiBceBangunan]);
 
   return (
     <div id="bce-section" className="space-y-6">
@@ -423,6 +524,235 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      {/* SPREADSHEET KESIMPULAN PENILAIAN NILAI PASAR & NILAI BCE (TANAH & BANGUNAN) */}
+      <section className="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-blue-700" />
+            <div>
+              <h2 className="text-base font-black text-slate-900 sm:text-lg">
+                KESIMPULAN NILAI PASAR & NILAI BCE
+              </h2>
+              <p className="text-xs text-slate-500">
+                Rekapitulasi nilai pasar dan nilai likuidasi BCE tanah dan bangunan sesuai kalkulasi data pasar.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddBuilding}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <Plus className="h-4 w-4" /> Tambah Keterangan Baru (Bangunan)
+          </button>
+        </div>
+
+        {/* Tabel Format Excel Seperti Spreadsheet Pengguna */}
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full border-collapse text-xs font-sans border border-slate-400">
+            <thead>
+              <tr className="border-b-2 border-slate-900 bg-slate-100 text-slate-900 font-black">
+                <th className="py-2.5 px-3 text-left border-r border-slate-300 w-1/4">Keterangan</th>
+                <th className="py-2.5 px-3 text-left border-r border-slate-300 w-1/6">Luas</th>
+                <th className="py-2.5 px-3 text-left border-r border-slate-300 w-1/6">Harga Pasar per m2</th>
+                <th className="py-2.5 px-3 text-center border-r border-slate-300 w-24">BCE</th>
+                <th className="py-2.5 px-3 text-right border-r border-slate-300 w-1/6">Nilai Pasar</th>
+                <th className="py-2.5 px-3 text-right border-r border-slate-300 w-1/6">Nilai BCE</th>
+                <th className="py-2.5 px-2 text-center w-12">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-300 bg-white text-slate-800">
+              {/* Baris 1: Tanah */}
+              <tr className="hover:bg-slate-50/60 transition-colors">
+                <td className="py-3 px-3 border-r border-slate-300 font-bold text-slate-900">
+                  Tanah
+                </td>
+                <td className="py-3 px-3 border-r border-slate-300">
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold text-slate-500">:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={collateralAreaM2}
+                      onChange={(e) => onCollateralAreaChange(Math.max(1, Number(e.target.value)))}
+                      className="w-20 rounded border border-slate-300 px-2 py-1 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none"
+                    />
+                    <span className="font-semibold text-slate-600">m²</span>
+                  </div>
+                </td>
+                <td className="py-3 px-3 border-r border-slate-300">
+                  <div className="flex items-center gap-1">
+                    <span className="font-semibold text-slate-500">Rp.</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="50000"
+                      value={activeTanahPricePerM2}
+                      onChange={(e) => setManualTanahPricePerM2(Number(e.target.value))}
+                      className="w-28 rounded border border-slate-300 px-2 py-1 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none"
+                    />
+                  </div>
+                </td>
+                <td className="py-3 px-3 border-r border-slate-300 text-center">
+                  <div className="inline-flex items-center justify-center rounded border border-red-300 bg-red-50/60 px-2 py-1 font-bold text-red-700">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={activeTanahBcePercent}
+                      onChange={(e) => setManualTanahBcePercent(Number(e.target.value))}
+                      className="w-10 bg-transparent text-center font-bold text-red-700 focus:outline-none"
+                    />
+                    <span>%</span>
+                  </div>
+                </td>
+                <td className="py-3 px-3 border-r border-slate-300 text-right">
+                  <div className="inline-block rounded border border-blue-200 bg-blue-50/70 px-2.5 py-1 text-right font-black text-blue-900">
+                    Rp. {nilaiPasarTanah.toLocaleString('id-ID')}
+                  </div>
+                </td>
+                <td className="py-3 px-3 border-r border-slate-300 text-right">
+                  <div className="inline-block rounded border-2 border-emerald-600 bg-emerald-50/40 px-2.5 py-1 text-right">
+                    <div className="font-black text-emerald-900">
+                      Rp. {nilaiBceTanah.toLocaleString('id-ID')}
+                    </div>
+                    <div className="text-[9px] text-emerald-600 font-mono font-medium">
+                      =NilaiPasar*BCE/100
+                    </div>
+                  </div>
+                </td>
+                <td className="py-3 px-2 text-center text-slate-400 text-xs">
+                  —
+                </td>
+              </tr>
+
+              {/* Baris 2+: Bangunan-bangunan Tambahan */}
+              {buildings.map((b) => {
+                const nilaiPasarBangunan = Math.round((Number(b.luasM2) || 0) * (Number(b.hargaPasarPerM2) || 0));
+                const nilaiBceBangunan = Math.round(nilaiPasarBangunan * ((Number(b.bcePercent) || 0) / 100));
+
+                return (
+                  <tr key={b.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3 px-3 border-r border-slate-300">
+                      <input
+                        type="text"
+                        value={b.keterangan}
+                        onChange={(e) => handleUpdateBuilding(b.id, 'keterangan', e.target.value)}
+                        placeholder="Contoh: Bangunan Lantai 1"
+                        className="w-full rounded border border-slate-300 px-2.5 py-1 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none"
+                      />
+                    </td>
+                    <td className="py-3 px-3 border-r border-slate-300">
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-slate-500">:</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={b.luasM2 || ''}
+                          onChange={(e) => handleUpdateBuilding(b.id, 'luasM2', Number(e.target.value))}
+                          placeholder="126"
+                          className="w-20 rounded border border-slate-300 px-2 py-1 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none"
+                        />
+                        <span className="font-semibold text-slate-600">m²</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 border-r border-slate-300">
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-slate-500">Rp.</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="50000"
+                          value={b.hargaPasarPerM2 || ''}
+                          onChange={(e) => handleUpdateBuilding(b.id, 'hargaPasarPerM2', Number(e.target.value))}
+                          placeholder="4300000"
+                          className="w-28 rounded border border-slate-300 px-2 py-1 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none"
+                        />
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 border-r border-slate-300 text-center">
+                      <div className="inline-flex items-center justify-center rounded border border-red-200 bg-red-50/50 px-2 py-1 font-bold text-red-700">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={b.bcePercent || ''}
+                          onChange={(e) => handleUpdateBuilding(b.id, 'bcePercent', Number(e.target.value))}
+                          placeholder="75"
+                          className="w-10 bg-transparent text-center font-bold text-red-700 focus:outline-none"
+                        />
+                        <span>%</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 border-r border-slate-300 text-right">
+                      <div className="inline-block rounded border border-slate-200 bg-slate-50 px-2.5 py-1 text-right font-black text-slate-800">
+                        Rp. {nilaiPasarBangunan.toLocaleString('id-ID')}
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 border-r border-slate-300 text-right">
+                      <div className="inline-block rounded border border-emerald-300 bg-emerald-50/30 px-2.5 py-1 text-right font-black text-emerald-800">
+                        Rp. {nilaiBceBangunan.toLocaleString('id-ID')}
+                      </div>
+                    </td>
+                    <td className="py-3 px-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveBuilding(b.id)}
+                        title="Hapus baris bangunan ini"
+                        className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Baris Total: Jumlah nilai tanah dan bangunan */}
+              <tr className="border-t-2 border-b-4 border-slate-900 bg-slate-100/90 font-black text-slate-900">
+                <td colSpan={4} className="py-3 px-3 border-r border-slate-300 font-extrabold uppercase tracking-wide">
+                  Jumlah nilai tanah dan bangunan
+                </td>
+                <td className="py-3 px-3 border-r border-slate-300 text-right">
+                  <div className="text-sm font-black text-blue-900">
+                    Rp. {grandTotalNilaiPasar.toLocaleString('id-ID')}
+                  </div>
+                </td>
+                <td className="py-3 px-3 border-r border-slate-300 text-right">
+                  <div className="text-sm font-black text-emerald-900">
+                    Rp. {grandTotalNilaiBce.toLocaleString('id-ID')}
+                  </div>
+                </td>
+                <td className="py-3 px-2 text-center text-xs text-slate-400">
+                  —
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Action Button & Note */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleAddBuilding}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:border-blue-400 hover:text-blue-700 transition"
+            >
+              <Plus className="h-3.5 w-3.5" /> Tambah Bangunan / Fasilitas Baru
+            </button>
+            <span className="text-slate-400">
+              (Misal: Bangunan Lantai 2, Gudang, Paviliun, dsb.)
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 font-mono">
+            Rumus: Nilai Pasar = Luas × Harga Pasar/m² • Nilai BCE = Nilai Pasar × BCE%
+          </p>
         </div>
       </section>
 
