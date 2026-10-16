@@ -28,9 +28,17 @@ class VercelPathMiddleware:
     async def __call__(self, scope, receive, send):
         if scope["type"] in ("http", "websocket"):
             headers = dict(scope.get("headers", []))
-            matched_path = headers.get(b"x-matched-path")
+            matched_path = (
+                headers.get(b"x-matched-path")
+                or headers.get(b"x-original-url")
+                or headers.get(b"x-rewrite-url")
+                or headers.get(b"x-forwarded-uri")
+            )
             if matched_path:
-                scope["path"] = matched_path.decode("utf-8").split("?")[0]
+                parts = matched_path.decode("utf-8").split("?")
+                scope["path"] = parts[0]
+                if len(parts) > 1 and not scope.get("query_string"):
+                    scope["query_string"] = parts[1].encode("utf-8")
             else:
                 path = scope.get("path", "")
                 if path.startswith("/api/index.py"):
@@ -41,6 +49,24 @@ wrapped_app = VercelPathMiddleware(app)
 
 try:
     from mangum import Mangum
-    handler = Mangum(wrapped_app, lifespan="off")
+    _mangum = Mangum(wrapped_app, lifespan="off")
+
+    def handler(event, context):
+        if isinstance(event, dict):
+            headers = event.get("headers") or {}
+            matched = (
+                headers.get("x-matched-path")
+                or headers.get("X-Matched-Path")
+                or headers.get("x-original-url")
+            )
+            if matched:
+                parts = matched.split("?")
+                event["path"] = parts[0]
+                if "rawPath" in event:
+                    event["rawPath"] = parts[0]
+            elif event.get("path") in ("/api/index.py", "/api/index"):
+                event["path"] = "/"
+        return _mangum(event, context)
+
 except Exception:
     handler = wrapped_app
