@@ -4,6 +4,16 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from app.core.config import settings
 
+# Monkeypatch kompatibilitas passlib dengan bcrypt versi terbaru pada Python 3.12+
+try:
+    import bcrypt
+    if not hasattr(bcrypt, "__about__"):
+        class About:
+            __version__ = getattr(bcrypt, "__version__", "4.0.1")
+        bcrypt.__about__ = About()
+except Exception:
+    pass
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
