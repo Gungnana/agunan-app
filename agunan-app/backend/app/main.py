@@ -16,6 +16,32 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+class VercelPathFixASGIMiddleware:
+    """Memperbaiki path URL asli dari header Vercel x-matched-path sebelum router FastAPI memproses rute."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            headers = dict(scope.get("headers", []))
+            matched = (
+                headers.get(b"x-matched-path")
+                or headers.get(b"x-original-url")
+                or headers.get(b"x-rewrite-url")
+                or headers.get(b"x-forwarded-uri")
+            )
+            if matched:
+                parts = matched.decode("utf-8").split("?")
+                scope["path"] = parts[0]
+                if len(parts) > 1 and not scope.get("query_string"):
+                    scope["query_string"] = parts[1].encode("utf-8")
+            elif scope.get("path") in ("/api/index.py", "/api/index", "/api", ""):
+                scope["path"] = "/"
+        await self.app(scope, receive, send)
+
+# Tambahkan ASGI Middleware Vercel
+app.add_middleware(VercelPathFixASGIMiddleware)
+
 # Konfigurasi Cross-Origin Resource Sharing (CORS)
 app.add_middleware(
     CORSMiddleware,
