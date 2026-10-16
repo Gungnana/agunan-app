@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Trash2, Building2, Calculator, Sparkles, Layers } from 'lucide-react';
+import { Plus, Trash2, Building2, Calculator, Sparkles, Layers, FileSpreadsheet, FileText } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { exportToExcel, exportToPdf } from '../utils/exportReport';
 
 export interface EvaluatedComparableItem {
   referenceTitle: string;
@@ -47,7 +49,10 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
   comparables,
   collateralAreaM2,
   onCollateralAreaChange,
+  collateralLocationName,
+  collateralCoordinates,
 }) => {
+  const { user } = useAuth();
   // Numeric scores matching user's spreadsheet defaults (Wilayah: 3, Lokasi Jalan: 2, Kualitas Tanah: 3, Marketable: 2 -> Total: 10 -> BCE: 75)
   const [wilayahScore, setWilayahScore] = useState<number>(3);
   const [lokasiJalanScore, setLokasiJalanScore] = useState<number>(2);
@@ -181,6 +186,55 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
   const grandTotalNilaiBce = useMemo(() => {
     return nilaiBceTanah + totalNilaiBceBangunan;
   }, [nilaiBceTanah, totalNilaiBceBangunan]);
+
+  // State & Handlers untuk Export Excel dan PDF
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const getReportData = () => ({
+    collateralLocationName: collateralLocationName || 'Area Bali',
+    collateralCoordinates: collateralCoordinates || { lat: -8.65, lon: 115.2167 },
+    collateralAreaM2,
+    analisName: user?.full_name || 'Budi Pratama (Analis Kredit)',
+    activeTanahPricePerM2,
+    activeTanahBcePercent,
+    nilaiPasarTanah,
+    nilaiBceTanah,
+    buildings,
+    grandTotalNilaiPasar,
+    grandTotalNilaiBce,
+    comparables,
+    bceScores: {
+      wilayah: wilayahScore,
+      lokasiJalan: lokasiJalanScore,
+      kualitasTanah: kualitasTanahScore,
+      marketable: marketableScore,
+      total: totalScore,
+      bcePercent: bcePercentage,
+    },
+  });
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExportingExcel(true);
+      await exportToExcel(getReportData());
+    } catch (err) {
+      console.error('Gagal export Excel:', err);
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
+  const handleExportPdf = () => {
+    try {
+      setIsExportingPdf(true);
+      exportToPdf(getReportData());
+    } catch (err) {
+      console.error('Gagal export PDF:', err);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   return (
     <div id="bce-section" className="space-y-6">
@@ -541,13 +595,35 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleAddBuilding}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <Plus className="h-4 w-4" /> Tambah Keterangan Baru (Bangunan)
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 shadow-xs hover:bg-emerald-100 hover:border-emerald-400 transition disabled:opacity-50"
+              title="Download file Excel dengan rumus otomatis"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
+              {isExportingExcel ? 'Menyiapkan Excel…' : 'Unduh Excel (.xlsx)'}
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={isExportingPdf}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-800 shadow-xs hover:bg-rose-100 hover:border-rose-400 transition disabled:opacity-50"
+              title="Download Laporan Penilaian format PDF"
+            >
+              <FileText className="h-4 w-4 text-rose-700" />
+              {isExportingPdf ? 'Menyiapkan PDF…' : 'Unduh Laporan PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={handleAddBuilding}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <Plus className="h-4 w-4" /> Tambah Keterangan Baru (Bangunan)
+            </button>
+          </div>
         </div>
 
         {/* Tabel Format Excel Seperti Spreadsheet Pengguna */}
