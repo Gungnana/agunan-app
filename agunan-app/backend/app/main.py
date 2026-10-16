@@ -68,9 +68,13 @@ class VercelPathFixASGIMiddleware:
 app.add_middleware(VercelPathFixASGIMiddleware)
 
 # Konfigurasi Cross-Origin Resource Sharing (CORS)
+cors_origins = settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [settings.CORS_ORIGINS]
+filtered_origins = [o for o in cors_origins if o != "*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [settings.CORS_ORIGINS],
+    allow_origin_regex=r"^https://.*\.vercel\.app$|^http://localhost(:\d+)?$|^http://127\.0\.0\.1(:\d+)?$",
+    allow_origins=filtered_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
