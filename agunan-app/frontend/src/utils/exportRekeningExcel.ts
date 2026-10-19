@@ -242,10 +242,10 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
     kreTotalCell.alignment = { horizontal: 'right', vertical: 'middle' };
     kreTotalCell.border = solidBorder;
 
-    // Col Saldo: Sum of daily balances for calculating average =SUM(E9:E39)
+    // Col Saldo: Sum of balances including Saldo Awal (Row 8) as in bank analyst template: =SUM(E8:E39)
     const salTotalCell = sheet.getCell(`${c.salCol}${totalRowNum}`);
     salTotalCell.value = {
-      formula: `SUM(${c.salCol}${startRow}:${c.salCol}${endRowForMonth})`,
+      formula: `SUM(${c.salCol}8:${c.salCol}${endRowForMonth})`,
     };
     salTotalCell.numFmt = currencyFormat;
     salTotalCell.font = { name: 'Arial', size: 10, bold: true };
@@ -300,7 +300,7 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
       {
         row: statsStartRow + 6,
         label: 'Rata-rata saldo',
-        formula: `AVERAGE(${c.salCol}${startRow}:${c.salCol}${endRowForMonth})`,
+        formula: `ROUND(${c.salCol}${totalRowNum}/${totalDayCount}, 0)`,
         numFmt: currencyFormat,
       },
     ];

@@ -48,9 +48,9 @@ export const RekapRekeningPage: React.FC = () => {
   const [rawTextToPaste, setRawTextToPaste] = useState<string>('');
 
   // Calculate statistics for each month
-  const statsMonth1 = useMemo(() => calculateMonthStats(data.months[0].records), [data.months[0]]);
-  const statsMonth2 = useMemo(() => calculateMonthStats(data.months[1].records), [data.months[1]]);
-  const statsMonth3 = useMemo(() => calculateMonthStats(data.months[2].records), [data.months[2]]);
+  const statsMonth1 = useMemo(() => calculateMonthStats(data.months[0].records, data.months[0].saldoAwal), [data.months[0]]);
+  const statsMonth2 = useMemo(() => calculateMonthStats(data.months[1].records, data.months[1].saldoAwal), [data.months[1]]);
+  const statsMonth3 = useMemo(() => calculateMonthStats(data.months[2].records, data.months[2].saldoAwal), [data.months[2]]);
 
   const statsList = [statsMonth1, statsMonth2, statsMonth3];
 
@@ -353,7 +353,7 @@ export const RekapRekeningPage: React.FC = () => {
                   {formatRupiah(stats.totalMutasiKredit)}
                 </td>
                 <td className="py-2.5 px-3 text-right text-blue-900 font-mono">
-                  {formatRupiah(m.records.reduce((acc, c) => acc + c.saldo, 0))}
+                  {formatRupiah(m.saldoAwal + m.records.reduce((acc, c) => acc + c.saldo, 0))}
                 </td>
               </tr>
             </tfoot>

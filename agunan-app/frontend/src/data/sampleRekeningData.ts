@@ -127,14 +127,17 @@ export const SAMPLE_REKAP_DATA: RekapRekeningData = {
   ],
 };
 
-export function calculateMonthStats(records: RekapRekeningData['months'][0]['records']): MonthStats {
+export function calculateMonthStats(
+  records: RekapRekeningData['months'][0]['records'],
+  saldoAwal: number = 0
+): MonthStats {
   let totalMutasiKredit = 0;
   let totalMutasiDebet = 0;
   let jumlahMutasiKredit = 0;
   let jumlahMutasiDebet = 0;
   let saldoTertinggi = -Infinity;
   let saldoTerendah = Infinity;
-  let sumSaldo = 0;
+  let sumSaldo = saldoAwal;
 
   records.forEach((r) => {
     if (r.kredit && r.kredit > 0) {
