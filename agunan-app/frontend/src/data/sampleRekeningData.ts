@@ -1,4 +1,7 @@
 import { RekapRekeningData, MonthStats } from '../types/rekening';
+import sampleMohAsmikJson from './sampleMohAsmik.json';
+
+export const SAMPLE_MOH_ASMIK_DATA: RekapRekeningData = sampleMohAsmikJson as any;
 
 export const SAMPLE_REKAP_DATA: RekapRekeningData = {
   namaDebitur: 'Heriyanto',

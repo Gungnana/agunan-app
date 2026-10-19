@@ -21,7 +21,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { RekapRekeningData, MonthRekap } from '../types/rekening';
-import { SAMPLE_REKAP_DATA, calculateMonthStats } from '../data/sampleRekeningData';
+import { SAMPLE_REKAP_DATA, SAMPLE_MOH_ASMIK_DATA, calculateMonthStats } from '../data/sampleRekeningData';
 import { exportRekeningToExcel } from '../utils/exportRekeningExcel';
 import { processUploadedBankStatements } from '../utils/bankStatementParser';
 
@@ -113,15 +113,22 @@ export const RekapRekeningPage: React.FC = () => {
   };
 
   // Quick test demo
-  const handleUseSample = () => {
+  const handleUseSample = (type: 'moh_asmik' | 'heriyanto' = 'moh_asmik') => {
     setIsProcessing(true);
     setTimeout(() => {
-      setUploadedFiles([
-        new File(['sample_bca_3bulan'], 'Rekening_Koran_BCA_3_Bulan_Heriyanto.pdf', { type: 'application/pdf' }),
-      ]);
-      setRekapData(SAMPLE_REKAP_DATA);
+      if (type === 'moh_asmik') {
+        setUploadedFiles([
+          new File(['sample_bca_moh_asmik'], 'Rekening_Tahapan_BCA_MOH_ASMIK.pdf', { type: 'application/pdf' }),
+        ]);
+        setRekapData(SAMPLE_MOH_ASMIK_DATA);
+      } else {
+        setUploadedFiles([
+          new File(['sample_bca_heriyanto'], 'Rekening_Koran_BCA_Heriyanto.pdf', { type: 'application/pdf' }),
+        ]);
+        setRekapData(SAMPLE_REKAP_DATA);
+      }
       setIsProcessing(false);
-    }, 400);
+    }, 300);
   };
 
   // Download Excel
@@ -228,15 +235,23 @@ export const RekapRekeningPage: React.FC = () => {
           </div>
 
           {/* Quick Demo Test Option */}
-          <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-slate-500">
-            <span>Belum memiliki file rekening koran untuk dites?</span>
+          <div className="mt-6 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
+            <span>Uji coba cepat rekapan:</span>
             <button
               type="button"
-              onClick={handleUseSample}
+              onClick={() => handleUseSample('moh_asmik')}
               className="font-semibold text-blue-600 hover:text-blue-800 inline-flex items-center space-x-1 underline"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Gunakan File Contoh Heriyanto (BCA 3 Bulan)</span>
+              <span>Contoh BCA: MOH ASMIK (3 Bulan)</span>
+            </button>
+            <span className="text-slate-300">|</span>
+            <button
+              type="button"
+              onClick={() => handleUseSample('heriyanto')}
+              className="font-semibold text-slate-600 hover:text-slate-800 inline-flex items-center space-x-1 underline"
+            >
+              <span>Contoh BCA: Heriyanto</span>
             </button>
           </div>
 
