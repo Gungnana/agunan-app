@@ -19,6 +19,8 @@ import {
   TrendingUp,
   TrendingDown,
   Activity,
+  Edit3,
+  Check,
 } from 'lucide-react';
 import { RekapRekeningData, MonthRekap } from '../types/rekening';
 import { SAMPLE_REKAP_DATA, SAMPLE_MOH_ASMIK_DATA, calculateMonthStats } from '../data/sampleRekeningData';
@@ -43,6 +45,7 @@ export const RekapRekeningPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [isEditingMeta, setIsEditingMeta] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -83,7 +86,7 @@ export const RekapRekeningPage: React.FC = () => {
       setErrorMessage(null);
       setUploadedFiles(files);
 
-      const parsed = await processUploadedBankStatements(files, SAMPLE_REKAP_DATA);
+      const parsed = await processUploadedBankStatements(files);
       setRekapData(parsed);
     } catch (err: any) {
       console.error('Error processing bank statement files:', err);
@@ -318,25 +321,96 @@ export const RekapRekeningPage: React.FC = () => {
             </div>
 
             {/* Debitur & Rekening Metadata Card */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs">
-              <div>
-                <span className="text-slate-400 font-medium">Nama Debitur:</span>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{rekapData.namaDebitur}</div>
-              </div>
-              <div>
-                <span className="text-slate-400 font-medium">Tabungan Bank:</span>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">{rekapData.tabBank}</div>
-              </div>
-              <div>
-                <span className="text-slate-400 font-medium">Nomor Rekening:</span>
-                <div className="font-mono font-bold text-slate-900 text-sm mt-0.5">{rekapData.noRek}</div>
-              </div>
-              <div>
-                <span className="text-slate-400 font-medium">Periode Rekap:</span>
-                <div className="font-bold text-slate-900 text-sm mt-0.5">
-                  {rekapData.months[0].monthName} – {rekapData.months[2].monthName}
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 text-xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-slate-700 uppercase tracking-wide">Identitas Rekening Terbaca:</span>
+                  <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${
+                    rekapData.tabBank === 'BRI'
+                      ? 'bg-blue-600 text-white'
+                      : rekapData.tabBank === 'BCA'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-800 text-white'
+                  }`}>
+                    {rekapData.tabBank}
+                  </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingMeta(!isEditingMeta)}
+                  className="inline-flex items-center space-x-1 font-semibold text-blue-600 hover:text-blue-800 text-xs"
+                >
+                  {isEditingMeta ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Selesai Edit</span>
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Ubah Info Nasabah/Bank</span>
+                    </>
+                  )}
+                </button>
               </div>
+
+              {isEditingMeta ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <label className="block text-slate-500 font-semibold mb-1">Nama Debitur / Pemilik</label>
+                    <input
+                      type="text"
+                      value={rekapData.namaDebitur}
+                      onChange={(e) => setRekapData({ ...rekapData, namaDebitur: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      placeholder="Contoh: I WAYAN SUDIRTA"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 font-semibold mb-1">Nama Bank</label>
+                    <input
+                      type="text"
+                      value={rekapData.tabBank}
+                      onChange={(e) => setRekapData({ ...rekapData, tabBank: e.target.value.toUpperCase() })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      placeholder="Contoh: BRI, BCA, MANDIRI"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 font-semibold mb-1">Nomor Rekening</label>
+                    <input
+                      type="text"
+                      value={rekapData.noRek}
+                      onChange={(e) => setRekapData({ ...rekapData, noRek: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-slate-800 font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      placeholder="Contoh: 0017-01-023456-50-8"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <span className="text-slate-400 font-medium">Nama Debitur:</span>
+                    <div className="font-bold text-slate-900 text-sm mt-0.5">{rekapData.namaDebitur}</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-medium">Tabungan Bank:</span>
+                    <div className="font-bold text-slate-900 text-sm mt-0.5 flex items-center space-x-1.5">
+                      <span>{rekapData.tabBank}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-medium">Nomor Rekening:</span>
+                    <div className="font-mono font-bold text-slate-900 text-sm mt-0.5">{rekapData.noRek}</div>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-medium">Periode Rekap:</span>
+                    <div className="font-bold text-slate-900 text-sm mt-0.5">
+                      {rekapData.months[0].monthName} – {rekapData.months[2].monthName}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Highlight Metric Cards */}
