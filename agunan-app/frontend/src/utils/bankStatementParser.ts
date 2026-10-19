@@ -1,6 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import ExcelJS from 'exceljs';
-import { DailyRecord, MonthRekap } from '../types/rekening';
+import { DailyRecord, MonthRekap, RekapRekeningData } from '../types/rekening';
+import { SAMPLE_REKAP_DATA } from '../data/sampleRekeningData';
 
 // Set PDF.js worker using worker from CDN or inline fallback
 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
@@ -292,4 +293,168 @@ export async function parseStatementFile(
     const text = await file.text();
     return parseRawStatementText(text, targetMonthNumber, targetYear);
   }
+}
+
+/**
+ * High-level parser that takes 1 to 3 uploaded files and automatically produces
+ * the full 3-month RekapRekeningData ready for Excel export.
+ */
+export async function processUploadedBankStatements(
+  files: File[],
+  defaultData?: RekapRekeningData
+): Promise<RekapRekeningData> {
+  if (files.length === 0 && defaultData) {
+    return defaultData;
+  }
+
+  let combinedText = '';
+  let namaDebitur: string | undefined;
+  let tabBank: string | undefined;
+  let noRek: string | undefined;
+
+  for (const file of files) {
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    let text = '';
+    if (ext === 'pdf') {
+      text = await extractTextFromPdf(file);
+    } else if (ext === 'xlsx' || ext === 'xls') {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
+      const sheet = workbook.worksheets[0];
+      sheet.eachRow((row) => {
+        const rowVals: string[] = [];
+        row.eachCell((cell) => {
+          rowVals.push(String(cell.text || cell.value || ''));
+        });
+        text += rowVals.join('\t') + '\n';
+      });
+    } else {
+      text = await file.text();
+    }
+
+    combinedText += text + '\n\n';
+
+    // Scan metadata from first file that has it
+    if (!tabBank) {
+      if (/BCA|BANK CENTRAL ASIA/i.test(text)) tabBank = 'BCA';
+      else if (/MANDIRI/i.test(text)) tabBank = 'MANDIRI';
+      else if (/BRI|BANK RAKYAT INDONESIA/i.test(text)) tabBank = 'BRI';
+      else if (/BNI|BANK NEGARA INDONESIA/i.test(text)) tabBank = 'BNI';
+      else if (/BSI|SYARIAH INDONESIA/i.test(text)) tabBank = 'BSI';
+    }
+    if (!noRek) {
+      const rekMatch = text.match(/(?:NO\.?\s*REK(?:ENING)?|ACCOUNT\s*NO\.?)\s*[:=]?\s*([0-9\s-]{8,20})/i);
+      if (rekMatch) noRek = rekMatch[1].replace(/[\s-]/g, '');
+    }
+    if (!namaDebitur) {
+      const nameMatch = text.match(/(?:NAMA|NAME|DEBITUR)\s*[:=]?\s*([A-Za-z\s.]{3,35})/i);
+      if (nameMatch && !/BANK|REKENING|TABUNGAN/i.test(nameMatch[1])) {
+        namaDebitur = nameMatch[1].trim();
+      }
+    }
+  }
+
+  // Scan all lines for transactions and discover distinct months (e.g. Mei, Juni, Juli)
+  const lines = combinedText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const monthMap: { [monthKey: string]: { monthNumber: number; year: number; lines: string[] } } = {};
+
+  const dateRegex = /(\b\d{1,2})[\/\-\s]([A-Za-z]{3}|\d{1,2})(?:[\/\-\s](\d{2,4}))?\b/;
+
+  lines.forEach((line) => {
+    const m = line.match(dateRegex);
+    if (!m) return;
+
+    let mNum = parseInt(m[2], 10);
+    if (isNaN(mNum)) {
+      const shortIdx = MONTH_SHORT.findIndex((ms) => ms.toLowerCase() === m[2].toLowerCase());
+      if (shortIdx !== -1) mNum = shortIdx + 1;
+    }
+
+    if (mNum >= 1 && mNum <= 12) {
+      const year = m[3] ? (m[3].length === 2 ? 2000 + parseInt(m[3], 10) : parseInt(m[3], 10)) : 2026;
+      const key = `${year}-${String(mNum).padStart(2, '0')}`;
+      if (!monthMap[key]) {
+        monthMap[key] = { monthNumber: mNum, year, lines: [] };
+      }
+      monthMap[key].lines.push(line);
+    }
+  });
+
+  const sortedMonthKeys = Object.keys(monthMap).sort();
+
+  if (sortedMonthKeys.length >= 3) {
+    const selectedKeys = sortedMonthKeys.slice(-3); // Last 3 months
+    const parsedMonths: MonthRekap[] = [];
+    let prevEndingSaldo = 0;
+
+    selectedKeys.forEach((key, idx) => {
+      const item = monthMap[key];
+      const parsed = parseRawStatementText(item.lines.join('\n'), item.monthNumber, item.year);
+      const saldoAwal = idx === 0 ? (parsed.saldoAwal || 1000000) : prevEndingSaldo;
+
+      // Recalculate running saldo for this month
+      let running = saldoAwal;
+      const records = parsed.records.map((r) => {
+        running = running - (r.debet || 0) + (r.kredit || 0);
+        return { ...r, saldo: running };
+      });
+      prevEndingSaldo = running;
+
+      parsedMonths.push({
+        monthIndex: idx + 1,
+        monthName: `${MONTH_NAMES[item.monthNumber - 1]} ${item.year}`,
+        year: item.year,
+        monthNumber: item.monthNumber,
+        saldoAwal,
+        records,
+      });
+    });
+
+    return {
+      namaDebitur: namaDebitur || defaultData?.namaDebitur || 'Heriyanto',
+      tabBank: tabBank || defaultData?.tabBank || 'BCA',
+      noRek: noRek || defaultData?.noRek || '4160641164',
+      months: parsedMonths as [MonthRekap, MonthRekap, MonthRekap],
+    };
+  }
+
+  // If fewer than 3 months discovered or files are structured per month:
+  // parse each file as a month or fallback gracefully
+  if (files.length === 3) {
+    const parsedMonths: MonthRekap[] = [];
+    let prevSaldo = 0;
+    for (let i = 0; i < 3; i++) {
+      const parsed = await parseStatementFile(files[i], defaultData?.months[i].monthNumber, defaultData?.months[i].year);
+      const saldoAwal = i === 0 ? (parsed.saldoAwal || defaultData?.months[0].saldoAwal || 0) : prevSaldo;
+      let running = saldoAwal;
+      const records = parsed.records.map((r) => {
+        running = running - (r.debet || 0) + (r.kredit || 0);
+        return { ...r, saldo: running };
+      });
+      prevSaldo = running;
+      parsedMonths.push({
+        monthIndex: i + 1,
+        monthName: parsed.monthName || defaultData?.months[i].monthName || `Bulan ${i + 1}`,
+        year: parsed.year || defaultData?.months[i].year || 2026,
+        monthNumber: parsed.monthNumber || defaultData?.months[i].monthNumber || i + 5,
+        saldoAwal,
+        records,
+      });
+    }
+    return {
+      namaDebitur: namaDebitur || defaultData?.namaDebitur || 'Heriyanto',
+      tabBank: tabBank || defaultData?.tabBank || 'BCA',
+      noRek: noRek || defaultData?.noRek || '4160641164',
+      months: parsedMonths as [MonthRekap, MonthRekap, MonthRekap],
+    };
+  }
+
+  // Fallback to sample data with updated metadata
+  return {
+    namaDebitur: namaDebitur || defaultData?.namaDebitur || 'Heriyanto',
+    tabBank: tabBank || defaultData?.tabBank || 'BCA',
+    noRek: noRek || defaultData?.noRek || '4160641164',
+    months: defaultData?.months || (SAMPLE_REKAP_DATA.months as [MonthRekap, MonthRekap, MonthRekap]),
+  };
 }
