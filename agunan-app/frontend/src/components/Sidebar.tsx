@@ -1,12 +1,15 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, ShieldCheck } from 'lucide-react';
+import { MapPin, ShieldCheck, WalletCards } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
 
-  const navItems = [{ to: '/', label: 'Cari Harga Tanah', icon: MapPin, roles: ['ANALIS', 'REVIEWER', 'ADMIN'] }];
+  const navItems = [
+    { to: '/', label: 'Cari Harga Tanah', icon: MapPin, roles: ['ANALIS', 'REVIEWER', 'ADMIN'] },
+    { to: '/rekap-rekening', label: 'Rekap Rekening Koran', icon: WalletCards, roles: ['ANALIS', 'REVIEWER', 'ADMIN'] },
+  ];
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 min-h-[calc(100vh-4rem)] p-4 flex flex-col justify-between hidden md:flex">

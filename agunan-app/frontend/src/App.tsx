@@ -11,6 +11,7 @@ import { ValuasiAnalisaPage } from './pages/ValuasiAnalisaPage';
 import { ComparableDatabasePage } from './pages/ComparableDatabasePage';
 import { ParameterPage } from './pages/ParameterPage';
 import { AuditLogPage } from './pages/AuditLogPage';
+import { RekapRekeningPage } from './pages/RekapRekeningPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +106,14 @@ export const App: React.FC = () => {
               element={
                 <ProtectedLayout>
                   <AuditLogPage />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/rekap-rekening"
+              element={
+                <ProtectedLayout>
+                  <RekapRekeningPage />
                 </ProtectedLayout>
               }
             />
