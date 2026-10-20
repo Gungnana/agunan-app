@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { RekapRekeningData } from '../types/rekening';
+import { calculateMonthStats } from '../data/sampleRekeningData';
 
 export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Blob> {
   const workbook = new ExcelJS.Workbook();
@@ -179,10 +180,10 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
         }
         kreCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
-        // Running balance formula: Saldo = PreviousSaldo - Debet + Kredit
+        // Running balance formula: Saldo = PreviousSaldo - N(Debet) + N(Kredit)
         const prevRow = rowNum - 1;
         salCell.value = {
-          formula: `${c.salCol}${prevRow}-${c.debCol}${rowNum}+${c.kreCol}${rowNum}`,
+          formula: `${c.salCol}${prevRow}-N(${c.debCol}${rowNum})+N(${c.kreCol}${rowNum})`,
           result: rec.saldo,
         };
         salCell.numFmt = currencyFormat;
@@ -203,12 +204,19 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
     });
   }
 
+  // 3. Precalculate statistics for each month
+  const monthStatsList = data.months.map((m) => calculateMonthStats(m.records, m.saldoAwal));
+  const avg3Months = Math.round(
+    (monthStatsList[0].rataRataSaldo + monthStatsList[1].rataRataSaldo + monthStatsList[2].rataRataSaldo) / 3
+  );
+
   // 3. Total Row (Row 40)
   const totalRowNum = startRow + maxDays; // 40
   data.months.forEach((m, mIdx) => {
     const c = monthCols[mIdx];
     const totalDayCount = m.records.length;
     const endRowForMonth = startRow + totalDayCount - 1;
+    const ms = monthStatsList[mIdx];
 
     // Col No
     const noCell = sheet.getCell(`${c.noCol}${totalRowNum}`);
@@ -226,6 +234,7 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
     const debTotalCell = sheet.getCell(`${c.debCol}${totalRowNum}`);
     debTotalCell.value = {
       formula: `SUM(${c.debCol}${startRow}:${c.debCol}${endRowForMonth})`,
+      result: ms.totalMutasiDebet,
     };
     debTotalCell.numFmt = currencyFormat;
     debTotalCell.font = { name: 'Arial', size: 10, bold: true };
@@ -236,6 +245,7 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
     const kreTotalCell = sheet.getCell(`${c.kreCol}${totalRowNum}`);
     kreTotalCell.value = {
       formula: `SUM(${c.kreCol}${startRow}:${c.kreCol}${endRowForMonth})`,
+      result: ms.totalMutasiKredit,
     };
     kreTotalCell.numFmt = currencyFormat;
     kreTotalCell.font = { name: 'Arial', size: 10, bold: true };
@@ -243,9 +253,11 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
     kreTotalCell.border = solidBorder;
 
     // Col Saldo: Sum of balances including Saldo Awal (Row 8) as in bank analyst template: =SUM(E8:E39)
+    const sumSaldoWithAwal = m.saldoAwal + m.records.reduce((acc, r) => acc + (r.saldo || 0), 0);
     const salTotalCell = sheet.getCell(`${c.salCol}${totalRowNum}`);
     salTotalCell.value = {
       formula: `SUM(${c.salCol}8:${c.salCol}${endRowForMonth})`,
+      result: sumSaldoWithAwal,
     };
     salTotalCell.numFmt = currencyFormat;
     salTotalCell.font = { name: 'Arial', size: 10, bold: true };
@@ -259,48 +271,56 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
     const c = monthCols[mIdx];
     const totalDayCount = m.records.length;
     const endRowForMonth = startRow + totalDayCount - 1;
+    const ms = monthStatsList[mIdx];
 
     const statsDefs = [
       {
         row: statsStartRow,
         label: 'Total mutasi kredit',
         formula: `${c.kreCol}${totalRowNum}`,
+        result: ms.totalMutasiKredit,
         numFmt: currencyFormat,
       },
       {
         row: statsStartRow + 1,
         label: 'Total mutasi debet',
         formula: `${c.debCol}${totalRowNum}`,
+        result: ms.totalMutasiDebet,
         numFmt: currencyFormat,
       },
       {
         row: statsStartRow + 2,
         label: 'Jumlah mutasi kredit',
         formula: `COUNT(${c.kreCol}${startRow}:${c.kreCol}${endRowForMonth})`,
+        result: ms.jumlahMutasiKredit,
         numFmt: '#,##0" Kali"',
       },
       {
         row: statsStartRow + 3,
         label: 'Jumlah mutasi debet',
         formula: `COUNT(${c.debCol}${startRow}:${c.debCol}${endRowForMonth})`,
+        result: ms.jumlahMutasiDebet,
         numFmt: '#,##0" Kali"',
       },
       {
         row: statsStartRow + 4,
         label: 'Saldo tertinggi',
         formula: `MAX(${c.salCol}${startRow}:${c.salCol}${endRowForMonth})`,
+        result: ms.saldoTertinggi,
         numFmt: currencyFormat,
       },
       {
         row: statsStartRow + 5,
         label: 'Saldo terendah',
         formula: `MIN(${c.salCol}${startRow}:${c.salCol}${endRowForMonth})`,
+        result: ms.saldoTerendah,
         numFmt: currencyFormat,
       },
       {
         row: statsStartRow + 6,
         label: 'Rata-rata saldo',
         formula: `ROUND(${c.salCol}${totalRowNum}/${totalDayCount}, 0)`,
+        result: ms.rataRataSaldo,
         numFmt: currencyFormat,
       },
     ];
@@ -318,7 +338,10 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
       // Merge Debet and Kredit for stat value
       sheet.mergeCells(`${c.debCol}${stat.row}:${c.kreCol}${stat.row}`);
       const valCell = sheet.getCell(`${c.debCol}${stat.row}`);
-      valCell.value = { formula: stat.formula };
+      valCell.value = {
+        formula: stat.formula,
+        result: stat.result,
+      };
       valCell.numFmt = stat.numFmt;
       valCell.font = { name: 'Arial', size: 10, bold: true };
       valCell.alignment = { horizontal: 'right', vertical: 'middle' };
@@ -349,6 +372,7 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
   const overallVal = sheet.getCell(`C${avg3MRatRow}`);
   overallVal.value = {
     formula: `AVERAGE(C${avgRowForMonths},I${avgRowForMonths},O${avgRowForMonths})`,
+    result: avg3Months,
   };
   overallVal.numFmt = currencyFormat;
   overallVal.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF000000' } };

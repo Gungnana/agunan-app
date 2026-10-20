@@ -1,0 +1,954 @@
+{
+  "namaDebitur": "I MADE SUARDIKA",
+  "tabBank": "MANDIRI",
+  "noRek": "145-00-1928374-1",
+  "months": [
+    {
+      "monthIndex": 1,
+      "monthName": "Agustus 2026",
+      "year": 2026,
+      "monthNumber": 8,
+      "saldoAwal": 45000000,
+      "records": [
+        {
+          "no": 1,
+          "dateStr": "01-Aug-26",
+          "day": 1,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 11780000,
+          "saldo": 56780000
+        },
+        {
+          "no": 2,
+          "dateStr": "02-Aug-26",
+          "day": 2,
+          "month": 8,
+          "year": 2026,
+          "debet": 13340000,
+          "kredit": null,
+          "saldo": 43440000
+        },
+        {
+          "no": 3,
+          "dateStr": "03-Aug-26",
+          "day": 3,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 43440000
+        },
+        {
+          "no": 4,
+          "dateStr": "04-Aug-26",
+          "day": 4,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 6630000,
+          "saldo": 50070000
+        },
+        {
+          "no": 5,
+          "dateStr": "05-Aug-26",
+          "day": 5,
+          "month": 8,
+          "year": 2026,
+          "debet": 3980000,
+          "kredit": null,
+          "saldo": 46090000
+        },
+        {
+          "no": 6,
+          "dateStr": "06-Aug-26",
+          "day": 6,
+          "month": 8,
+          "year": 2026,
+          "debet": 11450000,
+          "kredit": null,
+          "saldo": 34640000
+        },
+        {
+          "no": 7,
+          "dateStr": "07-Aug-26",
+          "day": 7,
+          "month": 8,
+          "year": 2026,
+          "debet": 15260000,
+          "kredit": null,
+          "saldo": 19380000
+        },
+        {
+          "no": 8,
+          "dateStr": "08-Aug-26",
+          "day": 8,
+          "month": 8,
+          "year": 2026,
+          "debet": 13650000,
+          "kredit": null,
+          "saldo": 5730000
+        },
+        {
+          "no": 9,
+          "dateStr": "09-Aug-26",
+          "day": 9,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 26100000,
+          "saldo": 31830000
+        },
+        {
+          "no": 10,
+          "dateStr": "10-Aug-26",
+          "day": 10,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 8030000,
+          "saldo": 39860000
+        },
+        {
+          "no": 11,
+          "dateStr": "11-Aug-26",
+          "day": 11,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 39860000
+        },
+        {
+          "no": 12,
+          "dateStr": "12-Aug-26",
+          "day": 12,
+          "month": 8,
+          "year": 2026,
+          "debet": 14110000,
+          "kredit": null,
+          "saldo": 25750000
+        },
+        {
+          "no": 13,
+          "dateStr": "13-Aug-26",
+          "day": 13,
+          "month": 8,
+          "year": 2026,
+          "debet": 9050000,
+          "kredit": null,
+          "saldo": 16700000
+        },
+        {
+          "no": 14,
+          "dateStr": "14-Aug-26",
+          "day": 14,
+          "month": 8,
+          "year": 2026,
+          "debet": 12510000,
+          "kredit": null,
+          "saldo": 4190000
+        },
+        {
+          "no": 15,
+          "dateStr": "15-Aug-26",
+          "day": 15,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 4190000
+        },
+        {
+          "no": 16,
+          "dateStr": "16-Aug-26",
+          "day": 16,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 4190000
+        },
+        {
+          "no": 17,
+          "dateStr": "17-Aug-26",
+          "day": 17,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 7680000,
+          "saldo": 11870000
+        },
+        {
+          "no": 18,
+          "dateStr": "18-Aug-26",
+          "day": 18,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 11840000,
+          "saldo": 23710000
+        },
+        {
+          "no": 19,
+          "dateStr": "19-Aug-26",
+          "day": 19,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 13770000,
+          "saldo": 37480000
+        },
+        {
+          "no": 20,
+          "dateStr": "20-Aug-26",
+          "day": 20,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 25670000,
+          "saldo": 63150000
+        },
+        {
+          "no": 21,
+          "dateStr": "21-Aug-26",
+          "day": 21,
+          "month": 8,
+          "year": 2026,
+          "debet": 6060000,
+          "kredit": null,
+          "saldo": 57090000
+        },
+        {
+          "no": 22,
+          "dateStr": "22-Aug-26",
+          "day": 22,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 57090000
+        },
+        {
+          "no": 23,
+          "dateStr": "23-Aug-26",
+          "day": 23,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 26780000,
+          "saldo": 83870000
+        },
+        {
+          "no": 24,
+          "dateStr": "24-Aug-26",
+          "day": 24,
+          "month": 8,
+          "year": 2026,
+          "debet": 13460000,
+          "kredit": null,
+          "saldo": 70410000
+        },
+        {
+          "no": 25,
+          "dateStr": "25-Aug-26",
+          "day": 25,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 70410000
+        },
+        {
+          "no": 26,
+          "dateStr": "26-Aug-26",
+          "day": 26,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 70410000
+        },
+        {
+          "no": 27,
+          "dateStr": "27-Aug-26",
+          "day": 27,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 12620000,
+          "saldo": 83030000
+        },
+        {
+          "no": 28,
+          "dateStr": "28-Aug-26",
+          "day": 28,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": 25800000,
+          "saldo": 108830000
+        },
+        {
+          "no": 29,
+          "dateStr": "29-Aug-26",
+          "day": 29,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 108830000
+        },
+        {
+          "no": 30,
+          "dateStr": "30-Aug-26",
+          "day": 30,
+          "month": 8,
+          "year": 2026,
+          "debet": 9300000,
+          "kredit": null,
+          "saldo": 99530000
+        },
+        {
+          "no": 31,
+          "dateStr": "31-Aug-26",
+          "day": 31,
+          "month": 8,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 99530000
+        }
+      ]
+    },
+    {
+      "monthIndex": 2,
+      "monthName": "September 2026",
+      "year": 2026,
+      "monthNumber": 9,
+      "saldoAwal": 99530000,
+      "records": [
+        {
+          "no": 1,
+          "dateStr": "01-Sep-26",
+          "day": 1,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 11180000,
+          "saldo": 110710000
+        },
+        {
+          "no": 2,
+          "dateStr": "02-Sep-26",
+          "day": 2,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 18280000,
+          "saldo": 128990000
+        },
+        {
+          "no": 3,
+          "dateStr": "03-Sep-26",
+          "day": 3,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 128990000
+        },
+        {
+          "no": 4,
+          "dateStr": "04-Sep-26",
+          "day": 4,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 26950000,
+          "saldo": 155940000
+        },
+        {
+          "no": 5,
+          "dateStr": "05-Sep-26",
+          "day": 5,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 6990000,
+          "saldo": 162930000
+        },
+        {
+          "no": 6,
+          "dateStr": "06-Sep-26",
+          "day": 6,
+          "month": 9,
+          "year": 2026,
+          "debet": 15010000,
+          "kredit": null,
+          "saldo": 147920000
+        },
+        {
+          "no": 7,
+          "dateStr": "07-Sep-26",
+          "day": 7,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 14010000,
+          "saldo": 161930000
+        },
+        {
+          "no": 8,
+          "dateStr": "08-Sep-26",
+          "day": 8,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 161930000
+        },
+        {
+          "no": 9,
+          "dateStr": "09-Sep-26",
+          "day": 9,
+          "month": 9,
+          "year": 2026,
+          "debet": 16000000,
+          "kredit": null,
+          "saldo": 145930000
+        },
+        {
+          "no": 10,
+          "dateStr": "10-Sep-26",
+          "day": 10,
+          "month": 9,
+          "year": 2026,
+          "debet": 13420000,
+          "kredit": null,
+          "saldo": 132510000
+        },
+        {
+          "no": 11,
+          "dateStr": "11-Sep-26",
+          "day": 11,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 19460000,
+          "saldo": 151970000
+        },
+        {
+          "no": 12,
+          "dateStr": "12-Sep-26",
+          "day": 12,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 15530000,
+          "saldo": 167500000
+        },
+        {
+          "no": 13,
+          "dateStr": "13-Sep-26",
+          "day": 13,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 167500000
+        },
+        {
+          "no": 14,
+          "dateStr": "14-Sep-26",
+          "day": 14,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 167500000
+        },
+        {
+          "no": 15,
+          "dateStr": "15-Sep-26",
+          "day": 15,
+          "month": 9,
+          "year": 2026,
+          "debet": 6170000,
+          "kredit": null,
+          "saldo": 161330000
+        },
+        {
+          "no": 16,
+          "dateStr": "16-Sep-26",
+          "day": 16,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 161330000
+        },
+        {
+          "no": 17,
+          "dateStr": "17-Sep-26",
+          "day": 17,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 161330000
+        },
+        {
+          "no": 18,
+          "dateStr": "18-Sep-26",
+          "day": 18,
+          "month": 9,
+          "year": 2026,
+          "debet": 12370000,
+          "kredit": null,
+          "saldo": 148960000
+        },
+        {
+          "no": 19,
+          "dateStr": "19-Sep-26",
+          "day": 19,
+          "month": 9,
+          "year": 2026,
+          "debet": 11370000,
+          "kredit": null,
+          "saldo": 137590000
+        },
+        {
+          "no": 20,
+          "dateStr": "20-Sep-26",
+          "day": 20,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 137590000
+        },
+        {
+          "no": 21,
+          "dateStr": "21-Sep-26",
+          "day": 21,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 12810000,
+          "saldo": 150400000
+        },
+        {
+          "no": 22,
+          "dateStr": "22-Sep-26",
+          "day": 22,
+          "month": 9,
+          "year": 2026,
+          "debet": 16250000,
+          "kredit": null,
+          "saldo": 134150000
+        },
+        {
+          "no": 23,
+          "dateStr": "23-Sep-26",
+          "day": 23,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 134150000
+        },
+        {
+          "no": 24,
+          "dateStr": "24-Sep-26",
+          "day": 24,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": 24440000,
+          "saldo": 158590000
+        },
+        {
+          "no": 25,
+          "dateStr": "25-Sep-26",
+          "day": 25,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 158590000
+        },
+        {
+          "no": 26,
+          "dateStr": "26-Sep-26",
+          "day": 26,
+          "month": 9,
+          "year": 2026,
+          "debet": 4600000,
+          "kredit": null,
+          "saldo": 153990000
+        },
+        {
+          "no": 27,
+          "dateStr": "27-Sep-26",
+          "day": 27,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 153990000
+        },
+        {
+          "no": 28,
+          "dateStr": "28-Sep-26",
+          "day": 28,
+          "month": 9,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 153990000
+        },
+        {
+          "no": 29,
+          "dateStr": "29-Sep-26",
+          "day": 29,
+          "month": 9,
+          "year": 2026,
+          "debet": 11520000,
+          "kredit": null,
+          "saldo": 142470000
+        },
+        {
+          "no": 30,
+          "dateStr": "30-Sep-26",
+          "day": 30,
+          "month": 9,
+          "year": 2026,
+          "debet": 9690000,
+          "kredit": null,
+          "saldo": 132780000
+        }
+      ]
+    },
+    {
+      "monthIndex": 3,
+      "monthName": "Oktober 2026",
+      "year": 2026,
+      "monthNumber": 10,
+      "saldoAwal": 132780000,
+      "records": [
+        {
+          "no": 1,
+          "dateStr": "01-Oct-26",
+          "day": 1,
+          "month": 10,
+          "year": 2026,
+          "debet": 14110000,
+          "kredit": null,
+          "saldo": 118670000
+        },
+        {
+          "no": 2,
+          "dateStr": "02-Oct-26",
+          "day": 2,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 26900000,
+          "saldo": 145570000
+        },
+        {
+          "no": 3,
+          "dateStr": "03-Oct-26",
+          "day": 3,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 16870000,
+          "saldo": 162440000
+        },
+        {
+          "no": 4,
+          "dateStr": "04-Oct-26",
+          "day": 4,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 13100000,
+          "saldo": 175540000
+        },
+        {
+          "no": 5,
+          "dateStr": "05-Oct-26",
+          "day": 5,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 10620000,
+          "saldo": 186160000
+        },
+        {
+          "no": 6,
+          "dateStr": "06-Oct-26",
+          "day": 6,
+          "month": 10,
+          "year": 2026,
+          "debet": 6900000,
+          "kredit": null,
+          "saldo": 179260000
+        },
+        {
+          "no": 7,
+          "dateStr": "07-Oct-26",
+          "day": 7,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 179260000
+        },
+        {
+          "no": 8,
+          "dateStr": "08-Oct-26",
+          "day": 8,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 179260000
+        },
+        {
+          "no": 9,
+          "dateStr": "09-Oct-26",
+          "day": 9,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 20050000,
+          "saldo": 199310000
+        },
+        {
+          "no": 10,
+          "dateStr": "10-Oct-26",
+          "day": 10,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 25650000,
+          "saldo": 224960000
+        },
+        {
+          "no": 11,
+          "dateStr": "11-Oct-26",
+          "day": 11,
+          "month": 10,
+          "year": 2026,
+          "debet": 14900000,
+          "kredit": null,
+          "saldo": 210060000
+        },
+        {
+          "no": 12,
+          "dateStr": "12-Oct-26",
+          "day": 12,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 210060000
+        },
+        {
+          "no": 13,
+          "dateStr": "13-Oct-26",
+          "day": 13,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 15050000,
+          "saldo": 225110000
+        },
+        {
+          "no": 14,
+          "dateStr": "14-Oct-26",
+          "day": 14,
+          "month": 10,
+          "year": 2026,
+          "debet": 14100000,
+          "kredit": null,
+          "saldo": 211010000
+        },
+        {
+          "no": 15,
+          "dateStr": "15-Oct-26",
+          "day": 15,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 211010000
+        },
+        {
+          "no": 16,
+          "dateStr": "16-Oct-26",
+          "day": 16,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 211010000
+        },
+        {
+          "no": 17,
+          "dateStr": "17-Oct-26",
+          "day": 17,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 13130000,
+          "saldo": 224140000
+        },
+        {
+          "no": 18,
+          "dateStr": "18-Oct-26",
+          "day": 18,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 224140000
+        },
+        {
+          "no": 19,
+          "dateStr": "19-Oct-26",
+          "day": 19,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 15420000,
+          "saldo": 239560000
+        },
+        {
+          "no": 20,
+          "dateStr": "20-Oct-26",
+          "day": 20,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 11250000,
+          "saldo": 250810000
+        },
+        {
+          "no": 21,
+          "dateStr": "21-Oct-26",
+          "day": 21,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 250810000
+        },
+        {
+          "no": 22,
+          "dateStr": "22-Oct-26",
+          "day": 22,
+          "month": 10,
+          "year": 2026,
+          "debet": 11520000,
+          "kredit": null,
+          "saldo": 239290000
+        },
+        {
+          "no": 23,
+          "dateStr": "23-Oct-26",
+          "day": 23,
+          "month": 10,
+          "year": 2026,
+          "debet": 15640000,
+          "kredit": null,
+          "saldo": 223650000
+        },
+        {
+          "no": 24,
+          "dateStr": "24-Oct-26",
+          "day": 24,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 223650000
+        },
+        {
+          "no": 25,
+          "dateStr": "25-Oct-26",
+          "day": 25,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 223650000
+        },
+        {
+          "no": 26,
+          "dateStr": "26-Oct-26",
+          "day": 26,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 223650000
+        },
+        {
+          "no": 27,
+          "dateStr": "27-Oct-26",
+          "day": 27,
+          "month": 10,
+          "year": 2026,
+          "debet": 6680000,
+          "kredit": null,
+          "saldo": 216970000
+        },
+        {
+          "no": 28,
+          "dateStr": "28-Oct-26",
+          "day": 28,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": 13960000,
+          "saldo": 230930000
+        },
+        {
+          "no": 29,
+          "dateStr": "29-Oct-26",
+          "day": 29,
+          "month": 10,
+          "year": 2026,
+          "debet": null,
+          "kredit": null,
+          "saldo": 230930000
+        },
+        {
+          "no": 30,
+          "dateStr": "30-Oct-26",
+          "day": 30,
+          "month": 10,
+          "year": 2026,
+          "debet": 10150000,
+          "kredit": null,
+          "saldo": 220780000
+        },
+        {
+          "no": 31,
+          "dateStr": "31-Oct-26",
+          "day": 31,
+          "month": 10,
+          "year": 2026,
+          "debet": 17930000,
+          "kredit": null,
+          "saldo": 202850000
+        }
+      ]
+    }
+  ]
+}

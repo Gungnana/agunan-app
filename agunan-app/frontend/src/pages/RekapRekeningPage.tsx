@@ -21,11 +21,26 @@ import {
   Activity,
   Edit3,
   Check,
+  Lock,
+  Unlock,
+  KeyRound,
+  Eye,
+  EyeOff,
+  X,
 } from 'lucide-react';
 import { RekapRekeningData, MonthRekap } from '../types/rekening';
-import { SAMPLE_REKAP_DATA, SAMPLE_MOH_ASMIK_DATA, calculateMonthStats } from '../data/sampleRekeningData';
+import {
+  SAMPLE_REKAP_DATA,
+  SAMPLE_MOH_ASMIK_DATA,
+  SAMPLE_BNI_DATA,
+  SAMPLE_MANDIRI_DATA,
+  SAMPLE_BRI_DATA,
+  SAMPLE_BPD_BALI_DATA,
+  SAMPLE_BPR_KERTIAWAN_DATA,
+  calculateMonthStats
+} from '../data/sampleRekeningData';
 import { exportRekeningToExcel } from '../utils/exportRekeningExcel';
-import { processUploadedBankStatements } from '../utils/bankStatementParser';
+import { processUploadedBankStatements, PasswordRequiredError } from '../utils/bankStatementParser';
 
 const formatRupiah = (val: number | null | undefined): string => {
   if (val === null || val === undefined || isNaN(val)) return '-';
@@ -46,6 +61,14 @@ export const RekapRekeningPage: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [isEditingMeta, setIsEditingMeta] = useState<boolean>(false);
+
+  // PDF Password States
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
+  const [pdfPasswordInput, setPdfPasswordInput] = useState<string>('');
+  const [showPdfPassword, setShowPdfPassword] = useState<boolean>(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [passwordProtectedFile, setPasswordProtectedFile] = useState<File | null>(null);
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,22 +101,52 @@ export const RekapRekeningPage: React.FC = () => {
     return statsMonth1.totalMutasiDebet + statsMonth2.totalMutasiDebet + statsMonth3.totalMutasiDebet;
   }, [statsMonth1, statsMonth2, statsMonth3]);
 
-  // Handle file processing
-  const handleFiles = async (files: File[]) => {
+  // Handle file processing with optional password
+  const handleFiles = async (files: File[], password?: string) => {
     if (files.length === 0) return;
     try {
       setIsProcessing(true);
       setErrorMessage(null);
+      setPasswordErrorMsg(null);
       setUploadedFiles(files);
 
-      const parsed = await processUploadedBankStatements(files);
+      const parsed = await processUploadedBankStatements(files, password);
       setRekapData(parsed);
+      setIsPasswordModalOpen(false);
+      setPdfPasswordInput('');
+      setPasswordProtectedFile(null);
     } catch (err: any) {
       console.error('Error processing bank statement files:', err);
-      setErrorMessage(err.message || 'Gagal memproses file rekening koran. Pastikan format file sesuai.');
+      if (
+        err instanceof PasswordRequiredError ||
+        err.name === 'PasswordRequiredError' ||
+        /password/i.test(err.message || '')
+      ) {
+        setPendingFiles(files);
+        setPasswordProtectedFile(files[0] || null);
+        setIsPasswordModalOpen(true);
+        if (err.code === 2 || /incorrect|salah/i.test(err.message || '')) {
+          setPasswordErrorMsg('Password yang Anda masukkan salah. Silakan coba lagi.');
+        } else {
+          setPasswordErrorMsg(null);
+        }
+        setErrorMessage(null);
+      } else {
+        setErrorMessage(err.message || 'Gagal memproses file rekening koran. Pastikan format file sesuai.');
+      }
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleSubmitPassword = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!pdfPasswordInput.trim()) {
+      setPasswordErrorMsg('Harap masukkan password pembuka rekening.');
+      return;
+    }
+    const filesToProcess = pendingFiles.length > 0 ? pendingFiles : uploadedFiles;
+    handleFiles(filesToProcess, pdfPasswordInput.trim());
   };
 
   // Drag and drop handlers
@@ -116,14 +169,41 @@ export const RekapRekeningPage: React.FC = () => {
   };
 
   // Quick test demo
-  const handleUseSample = (type: 'moh_asmik' | 'heriyanto' = 'moh_asmik') => {
+  const handleUseSample = (
+    type: 'bni' | 'moh_asmik' | 'mandiri' | 'bri' | 'bpd_bali' | 'kertiawan' | 'heriyanto' = 'kertiawan'
+  ) => {
     setIsProcessing(true);
     setTimeout(() => {
-      if (type === 'moh_asmik') {
+      if (type === 'kertiawan') {
+        setUploadedFiles([
+          new File(['sample_bpr_kertiawan'], 'sample_rekening_bpr_kertiawan.pdf', { type: 'application/pdf' }),
+        ]);
+        setRekapData(SAMPLE_BPR_KERTIAWAN_DATA);
+      } else if (type === 'bni') {
+        setUploadedFiles([
+          new File(['sample_bni_yudi'], 'S1SMKDPS04_BNI_CetakMutasi_Form_9723008.PDF', { type: 'application/pdf' }),
+        ]);
+        setRekapData(SAMPLE_BNI_DATA);
+      } else if (type === 'moh_asmik') {
         setUploadedFiles([
           new File(['sample_bca_moh_asmik'], 'Rekening_Tahapan_BCA_MOH_ASMIK.pdf', { type: 'application/pdf' }),
         ]);
         setRekapData(SAMPLE_MOH_ASMIK_DATA);
+      } else if (type === 'mandiri') {
+        setUploadedFiles([
+          new File(['sample_mandiri_suardika'], 'Rekening_Koran_Mandiri_I_MADE_SUARDIKA.pdf', { type: 'application/pdf' }),
+        ]);
+        setRekapData(SAMPLE_MANDIRI_DATA);
+      } else if (type === 'bri') {
+        setUploadedFiles([
+          new File(['sample_bri_dewi'], 'Rekening_Koran_BRI_BritAma_NI_LUH_PUTU_DEWI.pdf', { type: 'application/pdf' }),
+        ]);
+        setRekapData(SAMPLE_BRI_DATA);
+      } else if (type === 'bpd_bali') {
+        setUploadedFiles([
+          new File(['sample_bpd_ardana'], 'Rekening_Koran_BPD_BALI_I_KETUT_ARDANA.pdf', { type: 'application/pdf' }),
+        ]);
+        setRekapData(SAMPLE_BPD_BALI_DATA);
       } else {
         setUploadedFiles([
           new File(['sample_bca_heriyanto'], 'Rekening_Koran_BCA_Heriyanto.pdf', { type: 'application/pdf' }),
@@ -131,7 +211,7 @@ export const RekapRekeningPage: React.FC = () => {
         setRekapData(SAMPLE_REKAP_DATA);
       }
       setIsProcessing(false);
-    }, 300);
+    }, 200);
   };
 
   // Download Excel
@@ -143,12 +223,14 @@ export const RekapRekeningPage: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const cleanDebitur = (rekapData.namaDebitur || 'Debitur').replace(/[^a-zA-Z0-9]/g, '_');
+      const cleanDebitur = (rekapData.namaDebitur || 'Debitur').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
       a.download = `Rekap_Rekening_Koran_${cleanDebitur}_3_Bulan.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 3000);
     } catch (err) {
       console.error('Export error:', err);
       alert('Terjadi kesalahan saat mengunduh file Excel.');
@@ -195,11 +277,10 @@ export const RekapRekeningPage: React.FC = () => {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer ${
-              isDragOver
-                ? 'border-blue-500 bg-blue-50/70 scale-[1.01]'
-                : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50/60'
-            }`}
+            className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer ${isDragOver
+              ? 'border-blue-500 bg-blue-50/70 scale-[1.01]'
+              : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50/60'
+              }`}
             onClick={() => fileInputRef.current?.click()}
           >
             <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
@@ -237,31 +318,80 @@ export const RekapRekeningPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Quick Demo Test Option */}
-          <div className="mt-6 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500">
-            <span>Uji coba cepat rekapan:</span>
-            <button
-              type="button"
-              onClick={() => handleUseSample('moh_asmik')}
-              className="font-semibold text-blue-600 hover:text-blue-800 inline-flex items-center space-x-1 underline"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Contoh BCA: MOH ASMIK (3 Bulan)</span>
-            </button>
-            <span className="text-slate-300">|</span>
-            <button
-              type="button"
-              onClick={() => handleUseSample('heriyanto')}
-              className="font-semibold text-slate-600 hover:text-slate-800 inline-flex items-center space-x-1 underline"
-            >
-              <span>Contoh BCA: Heriyanto</span>
-            </button>
+          {/* Quick Demo Test Option Multi-Bank */}
+          <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col items-center justify-center space-y-2.5 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="font-semibold text-slate-700 flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Sampel Rekening Koran BPR Bank Kertiawan:</span>
+              </span>
+              <a
+                href="/sample_rekening_bpr_kertiawan.pdf"
+                download="sample_rekening_bpr_kertiawan.pdf"
+                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-semibold text-[11px] inline-flex items-center space-x-1 border border-slate-200 transition-colors"
+                title="Unduh file PDF acuan BPR Bank Kertiawan"
+              >
+                <Download className="w-3 h-3 text-slate-500" />
+                <span>Unduh PDF Acuan</span>
+              </a>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleUseSample('kertiawan')}
+                className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold transition-all shadow-sm flex items-center space-x-1.5 text-xs"
+              >
+                <span>⭐ Coba Rekap BPR Bank Kertiawan (I Wayan Ardika)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUseSample('bni')}
+                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-lg font-medium transition-all"
+              >
+                BNI (Putu Yudi)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUseSample('moh_asmik')}
+                className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-lg font-medium transition-all"
+              >
+                BCA (Moh Asmik)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUseSample('mandiri')}
+                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 rounded-lg font-medium transition-all"
+              >
+                Mandiri (Made Suardika)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUseSample('bri')}
+                className="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 rounded-lg font-medium transition-all"
+              >
+                BRI (Luh Putu Dewi)
+              </button>
+            </div>
           </div>
 
+
+
           {errorMessage && (
-            <div className="mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{errorMessage}</span>
+            <div className="mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between gap-3">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+              {/password/i.test(errorMessage) && (
+                <button
+                  type="button"
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center space-x-1 flex-shrink-0 shadow-sm"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Masukkan Password</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -325,12 +455,22 @@ export const RekapRekeningPage: React.FC = () => {
               <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                 <div className="flex items-center space-x-2">
                   <span className="font-bold text-slate-700 uppercase tracking-wide">Identitas Rekening Terbaca:</span>
-                  <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${
-                    rekapData.tabBank === 'BRI'
-                      ? 'bg-blue-600 text-white'
-                      : rekapData.tabBank === 'BCA'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-800 text-white'
+                  <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] shadow-sm ${
+                    rekapData.tabBank === 'BPR BANK KERTIAWAN'
+                      ? 'bg-teal-700 text-white'
+                      : rekapData.tabBank === 'BNI'
+                        ? 'bg-amber-600 text-white'
+                        : rekapData.tabBank === 'BRI'
+                          ? 'bg-sky-600 text-white'
+                          : rekapData.tabBank === 'BCA'
+                            ? 'bg-indigo-600 text-white'
+                            : rekapData.tabBank === 'MANDIRI'
+                              ? 'bg-blue-900 text-amber-300'
+                              : rekapData.tabBank === 'BPD BALI'
+                                ? 'bg-rose-700 text-white'
+                                : rekapData.tabBank === 'BSI'
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'bg-slate-800 text-white'
                   }`}>
                     {rekapData.tabBank}
                   </span>
@@ -551,6 +691,117 @@ export const RekapRekeningPage: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Modal Input Password Rekening Koran */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header Modal */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Dokumen Memerlukan Password
+                  </h3>
+                  <p className="text-[11px] text-slate-500 truncate max-w-[240px]">
+                    {passwordProtectedFile ? passwordProtectedFile.name : 'File Rekening Koran Terproteksi'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPasswordModalOpen(false);
+                  setPasswordErrorMsg(null);
+                }}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Info Bank Password Box */}
+            <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3.5 text-xs text-amber-900 space-y-1.5">
+              <div className="flex items-center space-x-1.5 font-semibold text-amber-800">
+                <KeyRound className="w-4 h-4 text-amber-600" />
+                <span>Petunjuk Password dari Bank:</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-amber-900/90">
+                Bank penerbit e-statement memproteksi file ini. Password biasanya berupa:
+              </p>
+              <ul className="list-disc list-inside text-[11px] space-y-0.5 text-amber-950 font-medium">
+                <li><b>Tanggal Lahir</b> format <code className="bg-white/80 px-1 py-0.5 rounded text-amber-900 font-bold">DDMMYYYY</code> (contoh: <code className="bg-white/80 px-1 py-0.5 rounded text-amber-900 font-bold">23071981</code> untuk 23 Juli 1981)</li>
+                <li>Atau <b>6 digit</b> nomor rekening / nomor kartu ATM</li>
+              </ul>
+            </div>
+
+            {/* Form Input Password */}
+            <form onSubmit={handleSubmitPassword} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  Masukkan Password Dokumen
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type={showPdfPassword ? 'text' : 'password'}
+                    value={pdfPasswordInput}
+                    onChange={(e) => {
+                      setPdfPasswordInput(e.target.value);
+                      setPasswordErrorMsg(null);
+                    }}
+                    placeholder="Ketik password rekening..."
+                    autoFocus
+                    className={`w-full pl-10 pr-11 py-2.5 bg-slate-50 border ${
+                      passwordErrorMsg ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                    } rounded-xl text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPdfPassword(!showPdfPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPdfPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {passwordErrorMsg && (
+                  <p className="text-[11px] text-rose-600 font-semibold flex items-center space-x-1 mt-1">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{passwordErrorMsg}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPasswordModalOpen(false);
+                    setPasswordErrorMsg(null);
+                  }}
+                  className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isProcessing || !pdfPasswordInput.trim()}
+                  className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/25 transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                >
+                  <Unlock className="w-3.5 h-3.5" />
+                  <span>{isProcessing ? 'Membuka...' : 'Buka & Proses'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

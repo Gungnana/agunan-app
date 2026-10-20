@@ -39,16 +39,16 @@ const MONTH_SHORT = [
 
 const MONTH_WORD_MAP: Record<string, number> = {
   jan: 1, januari: 1, january: 1,
-  feb: 2, februari: 2, february: 2,
-  mar: 3, maret: 3, march: 3,
+  feb: 2, februari: 2, february: 2, peb: 2, pebruari: 2,
+  mar: 3, maret: 3, march: 3, mrt: 3,
   apr: 4, april: 4,
   mei: 5, may: 5,
   jun: 6, juni: 6, june: 6,
   jul: 7, juli: 7, july: 7,
-  agu: 8, agustus: 8, aug: 8, august: 8,
+  agu: 8, agustus: 8, aug: 8, august: 8, agt: 8,
   sep: 9, september: 9,
   okt: 10, oktober: 10, oct: 10, october: 10,
-  nov: 11, november: 11,
+  nov: 11, november: 11, nop: 11, nopember: 11,
   des: 12, desember: 12, dec: 12, december: 12,
 };
 
@@ -108,14 +108,47 @@ export interface StatementParseResult {
   monthsData: ExtractedStatementMonth[];
 }
 
+export class PasswordRequiredError extends Error {
+  code: number;
+  fileName: string;
+  constructor(message: string, code: number = 1, fileName: string = '') {
+    super(message);
+    this.name = 'PasswordRequiredError';
+    this.code = code;
+    this.fileName = fileName;
+  }
+}
+
 /**
  * Universal PDF Bank Statement Parser
  * Supports BRI (BritAma, Simpedes, Giro), BCA (Tahapan, Giro), Mandiri, BNI, BSI, and generic formats.
  */
-export async function parsePdfStatementWithCoordinates(file: File): Promise<StatementParseResult> {
+export async function parsePdfStatementWithCoordinates(
+  file: File,
+  password?: string
+): Promise<StatementParseResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-  const pdf = await loadingTask.promise;
+  const loadingTask = pdfjsLib.getDocument({
+    data: arrayBuffer,
+    password: password || undefined,
+  });
+
+  let pdf: any;
+  try {
+    pdf = await loadingTask.promise;
+  } catch (err: any) {
+    if (err.name === 'PasswordException' || /password/i.test(err.message || '')) {
+      const isIncorrect = err.code === 2 || /incorrect/i.test(err.message || '');
+      throw new PasswordRequiredError(
+        isIncorrect
+          ? 'Password yang Anda masukkan salah. Silakan coba lagi.'
+          : 'File rekening koran ini diproteksi oleh password.',
+        err.code || (isIncorrect ? 2 : 1),
+        file.name
+      );
+    }
+    throw err;
+  }
 
   let tabBank = 'BANK UMUM';
   let namaDebitur = '';
@@ -135,13 +168,13 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
     const page = await pdf.getPage(pageNum);
     const content = await page.getTextContent();
 
-    const items = content.items
+    const items: { x: number; y: number; str: string }[] = content.items
       .map((it: any) => ({
         x: Math.round(it.transform[4]),
         y: Math.round(it.transform[5]),
         str: (it.str || '').trim(),
       }))
-      .filter((it) => it.str.length > 0);
+      .filter((it: any) => it.str.length > 0);
 
     // Group items into lines by Y coordinate (tolerance +-4)
     const lineMap: { [y: number]: { x: number; y: number; str: string }[] } = {};
@@ -150,11 +183,13 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
     items.forEach((it) => {
       let matchedY = yList.find((y) => Math.abs(y - it.y) <= 4);
       if (matchedY === undefined) {
-        matchedY = it.y;
-        yList.push(matchedY);
-        lineMap[matchedY] = [];
+        const newY = it.y;
+        yList.push(newY);
+        lineMap[newY] = [];
+        lineMap[newY].push(it);
+      } else {
+        lineMap[matchedY].push(it);
       }
-      lineMap[matchedY].push(it);
     });
 
     yList.sort((a, b) => b - a);
@@ -180,28 +215,51 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
     ' ' +
     (pagesData[0]?.lines.slice(0, 10).map((l) => l.text).join(' ') || '');
 
-  if (/BANK\s*RAKYAT\s*INDONESIA|PT\.?\s*BRI|\bBRI\b|BRITAMA|SIMPEDES/i.test(headerText)) {
+  if (/BANK\s*RAKYAT\s*INDONESIA|PT\.?\s*BRI|\bBRI\b|BRITAMA|SIMPEDES|BRIMO/i.test(headerText)) {
     tabBank = 'BRI';
   } else if (/BANK\s*CENTRAL\s*ASIA|\bBCA\b|KLIKBCA|TAHAPAN/i.test(headerText)) {
     tabBank = 'BCA';
-  } else if (/BANK\s*MANDIRI|\bMANDIRI\b|LIVIN/i.test(headerText)) {
+  } else if (/BANK\s*MANDIRI|\bMANDIRI\b|LIVIN|KOPRA/i.test(headerText)) {
     tabBank = 'MANDIRI';
-  } else if (/BANK\s*NEGARA\s*INDONESIA|\bBNI\b/i.test(headerText)) {
+  } else if (/BANK\s*NEGARA\s*INDONESIA|\bBNI\b|BNI\s*DigiCS|bni\.co\.id|TAPLUS/i.test(headerText)) {
     tabBank = 'BNI';
-  } else if (/BANK\s*SYARIAH\s*INDONESIA|\bBSI\b/i.test(headerText)) {
+  } else if (/BANK\s*SYARIAH\s*INDONESIA|\bBSI\b|MUDHARABAH|WADIAH/i.test(headerText)) {
     tabBank = 'BSI';
+  } else if (/BPD\s*BALI|BANK\s*PEMBANGUNAN\s*DAERAH\s*BALI|SIMPEDA/i.test(headerText)) {
+    tabBank = 'BPD BALI';
+  } else if (/CIMB\s*NIAGA|OCTO/i.test(headerText)) {
+    tabBank = 'CIMB NIAGA';
+  } else if (/DANAMON/i.test(headerText)) {
+    tabBank = 'DANAMON';
+  } else if (/PERMATA/i.test(headerText)) {
+    tabBank = 'PERMATA';
+  } else if (/PANIN/i.test(headerText)) {
+    tabBank = 'PANIN';
+  } else if (/BTN|TABUNGAN\s*NEGARA/i.test(headerText)) {
+    tabBank = 'BTN';
+  } else if (/BPR\s*BANK\s*KERTIAWAN|BPR\s*KERTIAWAN|BANK\s*KERTIAWAN|KERTIAWAN/i.test(headerText)) {
+    tabBank = 'BPR BANK KERTIAWAN';
   } else {
     // Full document fallback
-    if (/PT\.?\s*BANK\s*RAKYAT\s*INDONESIA/i.test(allPagesText)) tabBank = 'BRI';
-    else if (/PT\.?\s*BANK\s*CENTRAL\s*ASIA/i.test(allPagesText)) tabBank = 'BCA';
-    else if (/PT\.?\s*BANK\s*MANDIRI/i.test(allPagesText)) tabBank = 'MANDIRI';
-    else if (/PT\.?\s*BANK\s*NEGARA\s*INDONESIA/i.test(allPagesText)) tabBank = 'BNI';
+    if (/PT\.?\s*BANK\s*RAKYAT\s*INDONESIA|\bBRI\b|BRITAMA/i.test(allPagesText)) tabBank = 'BRI';
+    else if (/PT\.?\s*BANK\s*CENTRAL\s*ASIA|\bBCA\b|TAHAPAN/i.test(allPagesText)) tabBank = 'BCA';
+    else if (/PT\.?\s*BANK\s*MANDIRI|\bMANDIRI\b|LIVIN/i.test(allPagesText)) tabBank = 'MANDIRI';
+    else if (/PT\.?\s*BANK\s*NEGARA\s*INDONESIA|\bBNI\b|bni\.co\.id|TAPLUS/i.test(allPagesText)) tabBank = 'BNI';
+    else if (/BANK\s*SYARIAH\s*INDONESIA|\bBSI\b/i.test(allPagesText)) tabBank = 'BSI';
+    else if (/BPD\s*BALI|PEMBANGUNAN\s*DAERAH\s*BALI/i.test(allPagesText)) tabBank = 'BPD BALI';
+    else if (/CIMB\s*NIAGA/i.test(allPagesText)) tabBank = 'CIMB NIAGA';
+    else if (/DANAMON/i.test(allPagesText)) tabBank = 'DANAMON';
+    else if (/PERMATA/i.test(allPagesText)) tabBank = 'PERMATA';
+    else if (/PANIN/i.test(allPagesText)) tabBank = 'PANIN';
+    else if (/BTN|TABUNGAN\s*NEGARA/i.test(allPagesText)) tabBank = 'BTN';
+    else if (/BPR\s*BANK\s*KERTIAWAN|BPR\s*KERTIAWAN|BANK\s*KERTIAWAN|KERTIAWAN/i.test(allPagesText)) tabBank = 'BPR BANK KERTIAWAN';
   }
 
   // 2. Detect Account Number (No. Rekening)
   const rekPatterns = [
-    /(?:Nomor\s*Rekening|No\.?\s*Rekening|No\.?\s*Rek|Account\s*No\.?|No\.\s*Acc)\s*[:.]?\s*([0-9\-\s]{8,25})/i,
-    /NO\.?\s*REKENING\s*:\s*([0-9\-\s]+)/i,
+    /(?:Nomor\s*Rekening|No\.?\s*Rekening|No\.?\s*Rek|Account\s*No\.?|No\.\s*Acc|No\.?\s*Rekening\s*\/[^\n:]+|Rekening|Account)\s*[:.]?\s*([0-9.\-\s]{8,30})/i,
+    /NO\.?\s*REKENING\s*:\s*([0-9.\-\s]+)/i,
+    /(?:Rekening|Account)\s*[\r\n\s:]+([0-9.\-]{8,25})/i,
   ];
   for (const pat of rekPatterns) {
     const m = allPagesText.match(pat);
@@ -216,31 +274,72 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
 
   // 3. Detect Debitur Name
   const namePatterns = [
-    /(?:Nama\s*Nasabah|Nama\s*Rekening|Nama\s*Pemilik|Nama\s*Customer|Nama\s*Akun|Account\s*Name)\s*[:.]\s*([A-Za-z0-9\s.,'/-]+)/i,
-    /(?:NAMA)\s*[:]\s*([A-Za-z0-9\s.,'/-]+)/i,
+    /(?:Nama\s*Nasabah|Nama\s*Lengkap|Nama\s*Pemilik(?:\s*Rekening)?|Nama\s*Customer|Nama\s*Akun|Account\s*Name|Nama\s*\/\s*Name)\s*[:.]\s*([A-Za-z0-9\s.,'/-]+)/i,
+    /(?:^|\s)NAMA\s*[:]\s*([A-Za-z0-9\s.,'/-]+)/i,
   ];
   for (const pat of namePatterns) {
     const m = allPagesText.match(pat);
     if (m && m[1]) {
-      const candidate = m[1].split(/\n|\r|Nomor|No\.|Alamat|Periode|Jenis|Mata/i)[0].trim();
-      if (candidate.length > 2 && !/REKENING|KCP|CABANG|HALAMAN/i.test(candidate)) {
+      let candidate = m[1].split(/\n|\r|Nomor|No\.|Alamat|Periode|Jenis|Mata|Produk|OPR|HAL|KODE/i)[0].trim();
+      candidate = candidate.replace(/^[:\s\-.]+/, '').trim();
+      if (
+        candidate.length > 2 &&
+        !/\d{4,}/.test(candidate) &&
+        !/REKENING|KCP|CABANG|HALAMAN|STATEMENT|DATE|TANGGAL|PRODUK|BRITAMA|SIMPEDES|TAPLUS|TAHAPAN/i.test(
+          candidate
+        )
+      ) {
         namaDebitur = candidate;
         break;
       }
     }
   }
 
-  // If BCA format and name not found from label, check items at x <= 50, y between 735 and 775
+  // Fallback BCA: Khusus bank BCA, pada baris NO. REKENING, teks di sisi kiri (x < 300) adalah Nama Nasabah (mis. I WAYAN ARDIKA)
   if (!namaDebitur && tabBank === 'BCA' && pagesData[0]) {
-    const nameCandidate = pagesData[0].items.find(
-      (it) =>
-        it.x <= 50 &&
-        it.y >= 735 &&
-        it.y <= 775 &&
-        it.str.length > 2 &&
-        !/REKENING|KCP|CABANG|HALAMAN|CATATAN/i.test(it.str)
-    );
-    if (nameCandidate) namaDebitur = nameCandidate.str;
+    for (const l of pagesData[0].lines) {
+      if (/NO\.?\s*REKENING/i.test(l.text)) {
+        const leftItems = l.items.filter((it) => it.x < 300 && !/REKENING|KCP|CABANG|HALAMAN/i.test(it.str));
+        const cand = leftItems.map((it) => it.str).join(' ').trim();
+        if (cand.length >= 3 && !/TAHAPAN|GIRO|DEPOSITO/i.test(cand) && !/\d{4,}/.test(cand)) {
+          namaDebitur = cand;
+          break;
+        }
+      }
+    }
+  }
+
+  // Fallback BRImo: Pada baris di bawah 'Kepada Yth. / To :', cari baris nama di sisi kiri (x < 300)
+  if (!namaDebitur && pagesData[0]) {
+    const lines = pagesData[0].lines;
+    const ythIdx = lines.findIndex((l) => /Kepada\s*Yth/i.test(l.text));
+    if (ythIdx !== -1) {
+      for (let offset = 1; offset <= 3; offset++) {
+        const l = lines[ythIdx + offset];
+        if (!l) break;
+        const leftItems = l.items.filter(
+          (it) => it.x < 300 && !/Kepada|Yth|Tanggal|Statement|Date|Periode|Transaction/i.test(it.str)
+        );
+        const cand = leftItems.map((it) => it.str).join(' ').trim();
+        if (cand.length >= 3 && !/BANJAR|DESA|JL\.|JALAN|RT\.|RW\.|KECAMATAN|KABUPATEN/i.test(cand)) {
+          namaDebitur = cand;
+          break;
+        }
+      }
+    }
+  }
+
+  // Fallback BNI DigiCS: cari baris sebelum label Produk / TAPLUS
+  if (!namaDebitur && pagesData[0]) {
+    for (const l of pagesData[0].lines) {
+      if (/TAPLUS|PRODUK/i.test(l.text)) {
+        const cand = l.text.split(/Produk|TAPLUS/i)[0].trim();
+        if (cand.length >= 3 && !/TANGGAL|REKENING|KEPADA|PERIODE/i.test(cand)) {
+          namaDebitur = cand;
+          break;
+        }
+      }
+    }
   }
 
   // If still not detected, clean up filename as debitur name
@@ -250,7 +349,7 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
       .replace(/^(rekening[-_]koran|statement|bca|bri|mandiri|bni)[-_]/i, '')
       .replace(/[_\-+]/g, ' ')
       .trim();
-    if (cleanFileName.length >= 3) {
+    if (cleanFileName.length >= 3 && !/^[0-9a-f]{20,}$/i.test(cleanFileName)) {
       namaDebitur = cleanFileName.toUpperCase();
     } else {
       namaDebitur = 'NASABAH ' + tabBank;
@@ -397,8 +496,12 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
       for (const line of page.lines) {
         const text = line.text;
 
-        // Skip headers & footers
-        if (/SALDO AWAL|MUTASI CR|MUTASI DB|SALDO AKHIR|HALAMAN|PERIODE TRANSAKSI|KETERANGAN\s+DEBET\s+KREDIT/i.test(text)) {
+        // Skip headers & footers & page numbers
+        if (
+          /SALDO AWAL|MUTASI CR|MUTASI DB|SALDO AKHIR|PERIODE TRANSAKSI|KETERANGAN\s+DEBET\s+KREDIT|HALAMAN\s*\d+\s*DARI|HAL\s*[:.]?\s*\d+\s*DARI/i.test(
+            text
+          )
+        ) {
           // Check if this line defines Saldo Awal
           const mSA = text.match(/SALDO\s*AWAL\s*[:.]?\s*([0-9.,]+)/i);
           if (mSA) {
@@ -407,30 +510,64 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
           continue;
         }
 
-        // Match date: DD/MM/YYYY, DD/MM/YY, DD-MM-YYYY, DD/MM, etc.
-        const dMatch = text.match(
-          /(?:^|\s)(\d{1,2})[\/\-\.\s](\d{1,2}|Jan|Feb|Mar|Apr|Mei|May|Jun|Jul|Agu|Aug|Sep|Okt|Oct|Nov|Des|Dec)(?:[\/\-\.\s](\d{2,4}))?(?:\s|$)/i
+        // Match date: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, DD MM YYYY, DD/MM
+        let day: number | null = null;
+        let month: number | null = null;
+        let year: number = currentYear;
+        let textWithoutDate = text;
+
+        const isoMatch = text.match(/(?:^|\s)(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:\s|$)/);
+        if (isoMatch) {
+          year = parseInt(isoMatch[1], 10);
+          month = parseInt(isoMatch[2], 10);
+          day = parseInt(isoMatch[3], 10);
+          textWithoutDate = text.replace(isoMatch[0], ' ');
+        } else {
+          const dMatch = text.match(
+            /(?:^|\s)(\d{1,2})[\/\-\.\s]([A-Za-z]+|\d{1,2})(?:[\/\-\.\s](\d{2,4}))?(?:\s|$)/
+          );
+          if (dMatch) {
+            const d = parseInt(dMatch[1], 10);
+            const mToken = dMatch[2].toLowerCase();
+            let m = parseInt(mToken, 10);
+            if (isNaN(m)) {
+              if (MONTH_WORD_MAP[mToken]) {
+                m = MONTH_WORD_MAP[mToken];
+              } else {
+                continue; // Not a valid month name (e.g. 'dari', 'ke', etc.)
+              }
+            }
+            if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
+              day = d;
+              month = m;
+              if (dMatch[3]) {
+                const yStr = dMatch[3];
+                year = yStr.length === 2 ? 2000 + parseInt(yStr, 10) : parseInt(yStr, 10);
+              }
+              textWithoutDate = text.replace(dMatch[0], ' ');
+            }
+          }
+        }
+
+        if (!day || !month || day < 1 || day > 31 || month < 1 || month > 12) continue;
+
+        // Clean time patterns (e.g. 06:21:30) so they don't interfere with currency tokens
+        textWithoutDate = textWithoutDate.replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, ' ');
+
+        // Extract currency numbers on the line:
+        // Supports: 0.00 / 0,00 / 1.234.567,89 / 1,234,567.89 / 15.000.000 / 250,000 / 50.000
+        let numTokens = textWithoutDate.match(
+          /\b(?:0[.,]00|\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d+[.,]\d{2})\b/g
         );
-        if (!dMatch) continue;
 
-        const day = parseInt(dMatch[1], 10);
-        if (day < 1 || day > 31) continue;
-
-        const mToken = dMatch[2].toLowerCase();
-        let month = parseInt(mToken, 10);
-        if (isNaN(month)) {
-          month = MONTH_WORD_MAP[mToken] || 1;
-        }
-        if (month < 1 || month > 12) continue;
-
-        let year = currentYear;
-        if (dMatch[3]) {
-          const yStr = dMatch[3];
-          year = yStr.length === 2 ? 2000 + parseInt(yStr, 10) : parseInt(yStr, 10);
+        // Fallback: If no dotted/comma numbers found, look for plain 5+ digit integers (>= 10,000)
+        if (!numTokens || numTokens.length === 0) {
+          const plainNumbers = textWithoutDate.match(/\b\d{5,12}\b/g);
+          if (plainNumbers && plainNumbers.length > 0) {
+            numTokens = plainNumbers;
+          }
         }
 
-        // Extract currency numbers on the line
-        const numTokens = text.match(/(?:\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})|\d+[.,]\d{2})/g);
         if (!numTokens || numTokens.length === 0) continue;
 
         const amounts = numTokens.map(cleanCurrency);
@@ -440,12 +577,12 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
         let saldo: number | undefined = undefined;
 
         if (amounts.length >= 3) {
-          // Format standard BRI / Mandiri: [Debet, Kredit, Saldo]
+          // Format standard BRI / Mandiri / BPD Bali 3-Column: [Debet, Kredit, Saldo]
           saldo = amounts[amounts.length - 1];
           kredit = amounts[amounts.length - 2];
           debet = amounts[amounts.length - 3];
         } else if (amounts.length === 2) {
-          // Format: [Amount, Saldo] with D/K marker or comparison with running balance
+          // Format: [Amount, Saldo] with D/K or DB/CR marker or comparison with running balance
           saldo = amounts[1];
           const mutasi = amounts[0];
           const hasDbFlag = /\b(D|DB|DEBET|DEBIT)\b/i.test(text);
@@ -457,14 +594,31 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
             kredit = mutasi;
           } else {
             // Arithmetic check: if saldo went down, it's debet. If went up, kredit.
-            if (saldo < runningBalance) debet = mutasi;
-            else kredit = mutasi;
+            if (runningBalance > 0) {
+              if (saldo < runningBalance) debet = mutasi;
+              else kredit = mutasi;
+            } else {
+              // Keyword heuristic
+              if (/\b(TARIK|BIAYA|ADM|PAJAK|TRF KE|TRANSFER KE|PEMBELIAN|DEBIT)\b/i.test(text)) {
+                debet = mutasi;
+              } else {
+                kredit = mutasi;
+              }
+            }
           }
         } else if (amounts.length === 1) {
           const mutasi = amounts[0];
           const hasDbFlag = /\b(D|DB|DEBET|DEBIT)\b/i.test(text);
-          if (hasDbFlag) debet = mutasi;
-          else kredit = mutasi;
+          const hasCrFlag = /\b(CR|K|KREDIT|CREDIT)\b/i.test(text);
+          if (hasDbFlag) {
+            debet = mutasi;
+          } else if (hasCrFlag) {
+            kredit = mutasi;
+          } else if (/\b(TARIK|BIAYA|ADM|PAJAK|TRF KE|TRANSFER KE|PEMBELIAN)\b/i.test(text)) {
+            debet = mutasi;
+          } else {
+            kredit = mutasi;
+          }
         }
 
         const isDb = debet > 0;
@@ -488,12 +642,17 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
           };
         }
 
+        const cleanDesc = textWithoutDate
+          .replace(/\b(?:0[.,]00|\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d+[.,]\d{2})\b/g, '')
+          .replace(/\b(D|K|DB|CR)\b/g, '')
+          .trim();
+
         monthlyMap[monthKey].txs.push({
           date: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`,
           day,
           month,
           year,
-          desc: text.slice(0, 50),
+          desc: cleanDesc.slice(0, 60) || text.slice(0, 50),
           isDb,
           amount,
           saldo,
@@ -506,12 +665,24 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
   const sortedKeys = Object.keys(monthlyMap).sort();
   const monthsData: ExtractedStatementMonth[] = sortedKeys.map((k) => {
     const m = monthlyMap[k];
+    const sortedTxs = [...m.txs].sort((a, b) => a.day - b.day);
+
+    let calculatedSaldoAwal = m.saldoAwal || detectedGlobalSaldoAwal || 0;
+    if (sortedTxs.length > 0 && sortedTxs[0].saldo !== undefined) {
+      const first = sortedTxs[0];
+      const s = first.saldo as number;
+      calculatedSaldoAwal = first.isDb ? s + first.amount : s - first.amount;
+    }
+
+    const lastWithSaldo = [...sortedTxs].reverse().find((t) => t.saldo !== undefined);
+    const calculatedSaldoAkhir = lastWithSaldo?.saldo || (sortedTxs.length > 0 ? sortedTxs[sortedTxs.length - 1].saldo || 0 : 0);
+
     return {
       monthName: m.monthName,
       monthNumber: m.monthNumber,
       year: m.year,
-      saldoAwal: m.saldoAwal || detectedGlobalSaldoAwal || 0,
-      saldoAkhir: m.saldoAkhir || (m.txs.length > 0 ? m.txs[m.txs.length - 1].saldo || 0 : 0),
+      saldoAwal: Math.round(calculatedSaldoAwal),
+      saldoAkhir: Math.round(calculatedSaldoAkhir),
       txs: m.txs,
       officialSummary: m.officialSummary,
     };
@@ -531,6 +702,7 @@ export async function parsePdfStatementWithCoordinates(file: File): Promise<Stat
  */
 export async function processUploadedBankStatements(
   files: File[],
+  password?: string,
   defaultData?: RekapRekeningData
 ): Promise<RekapRekeningData> {
   if (files.length === 0) {
@@ -546,7 +718,7 @@ export async function processUploadedBankStatements(
   // Process all uploaded PDF files
   const parsedResults: StatementParseResult[] = [];
   for (const file of pdfFiles) {
-    const res = await parsePdfStatementWithCoordinates(file);
+    const res = await parsePdfStatementWithCoordinates(file, password);
     parsedResults.push(res);
   }
 
