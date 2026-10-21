@@ -779,7 +779,31 @@ export async function processUploadedBankStatements(
   let targetMonths: ExtractedStatementMonth[] = [];
 
   if (allMonths.length >= 3) {
-    targetMonths = allMonths.slice(0, 3);
+    // Pattern Bank Mandiri / E-statement: Periode seringkali dimulai dari hari terakhir bulan sebelumnya
+    // (misal: 31 Jul 2026 - 08 Oct 2026) hanya untuk mendebet biaya administrasi bulanan di jam 23:59 WIB.
+    // Jika terdapat 4 bulan di mana bulan pertama hanya memiliki <= 2 transaksi di tanggal akhir (>= 28):
+    if (allMonths.length === 4 && allMonths[0].txs.length <= 2 && allMonths[0].txs.every((t) => t.day >= 28)) {
+      const boundaryMonth = allMonths[0];
+      const primaryMonths = allMonths.slice(1, 4);
+
+      // Saldo awal bulan pertama utama (Agustus) adalah saldo awal resmi sebelum transaksi penutup tersebut
+      primaryMonths[0].saldoAwal = boundaryMonth.saldoAwal;
+
+      // Pindahkan transaksi batas akhir bulan tersebut ke hari pertama bulan utama agar seluruh mutasi tetap utuh
+      for (const bTx of boundaryMonth.txs) {
+        primaryMonths[0].txs.unshift({
+          ...bTx,
+          day: 1,
+          month: primaryMonths[0].monthNumber,
+          year: primaryMonths[0].year,
+          date: `01/${String(primaryMonths[0].monthNumber).padStart(2, '0')}`,
+        });
+      }
+      targetMonths = primaryMonths;
+    } else {
+      // Secara umum pada analisa kredit perbankan, selalu ambil 3 bulan terakhir (terbaru)
+      targetMonths = allMonths.slice(-3);
+    }
   } else if (allMonths.length === 2) {
     // 2 months present, prepend 1 preceding month or append 1 next month
     const m1 = allMonths[0];
