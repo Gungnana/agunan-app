@@ -35,9 +35,6 @@ class Settings(BaseSettings):
     # pencarian web melalui Brave Search API.
     BRAVE_SEARCH_API_KEY: str = "BSAdpcrAFpA-ae5TqkyP5rJIMcgxwni"
 
-    # Google AI Studio / Gemini API Key untuk ekstraksi mutasi rekening koran cerdas
-    GEMINI_API_KEY: str = ""
-
     # Default Initial Accounts
     INITIAL_ADMIN_USERNAME: str = "admin"
     INITIAL_ADMIN_EMAIL: str = "admin@bank.co.id"
