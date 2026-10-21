@@ -119,10 +119,39 @@ export async function processStatementsWithGeminiAI(
           },
         };
 
-        const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
-        for (const model of models) {
+        // Dynamic discovery of models supported by this API key
+        let candidateModels: string[] = [];
+        try {
+          const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            const supported = (listData.models || [])
+              .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+              .map((m: any) => m.name.replace(/^models\//, ''));
+
+            const flashModels = supported.filter((m: string) => /flash/i.test(m));
+            const otherModels = supported.filter((m: string) => !/flash/i.test(m));
+            candidateModels = [...flashModels, ...otherModels];
+          }
+        } catch (e) {
+          console.warn('Gagal mengambil daftar model Gemini:', e);
+        }
+
+        if (candidateModels.length === 0) {
+          candidateModels = [
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-exp',
+            'gemini-1.5-flash-latest',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro-latest',
+          ];
+        }
+
+        for (const model of candidateModels) {
           try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const cleanModelName = model.replace(/^models\//, '');
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModelName}:generateContent?key=${apiKey}`;
             const response = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -143,7 +172,7 @@ export async function processStatementsWithGeminiAI(
               }
             } else {
               const errBody = await response.text();
-              lastError = `Google AI Studio (${model}) error: ${response.status} - ${errBody}`;
+              lastError = `Google AI Studio (${cleanModelName}) error: ${response.status} - ${errBody}`;
             }
           } catch (modelErr: any) {
             lastError = modelErr.message || String(modelErr);

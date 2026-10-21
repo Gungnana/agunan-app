@@ -103,13 +103,40 @@ async def extract_rekening_with_ai(
         }
     }
 
-    # Model prioritaskan gemini-2.0-flash, jika gagal coba gemini-1.5-flash
-    models = ["gemini-2.0-flash", "gemini-1.5-flash"]
     last_error = ""
 
     async with httpx.AsyncClient(timeout=60.0) as client:
-        for model_name in models:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={resolved_api_key}"
+        # Dynamic discovery of models supported by this API key
+        candidate_models = []
+        try:
+            list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={resolved_api_key}"
+            list_res = await client.get(list_url)
+            if list_res.status_code == 200:
+                models_data = list_res.json().get("models", [])
+                supported = [
+                    m["name"].replace("models/", "")
+                    for m in models_data
+                    if "generateContent" in m.get("supportedGenerationMethods", [])
+                ]
+                flash_models = [m for m in supported if "flash" in m.lower()]
+                other_models = [m for m in supported if "flash" not in m.lower()]
+                candidate_models = flash_models + other_models
+        except Exception as e:
+            logger.warning(f"Gagal mengambil daftar model: {e}")
+
+        if not candidate_models:
+            candidate_models = [
+                "gemini-2.5-flash",
+                "gemini-2.0-flash",
+                "gemini-2.0-flash-exp",
+                "gemini-1.5-flash-latest",
+                "gemini-1.5-flash",
+                "gemini-1.5-pro-latest",
+            ]
+
+        for model_name in candidate_models:
+            clean_name = model_name.replace("models/", "")
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{clean_name}:generateContent?key={resolved_api_key}"
             try:
                 res = await client.post(url, json=payload)
                 if res.status_code == 200:
@@ -133,16 +160,16 @@ async def extract_rekening_with_ai(
                     parsed_data = json.loads(clean_json_str)
                     return {
                         "status": "SUCCESS",
-                        "model_used": model_name,
+                        "model_used": clean_name,
                         "data": parsed_data
                     }
                 else:
                     err_msg = res.text
-                    last_error = f"{model_name} error ({res.status_code}): {err_msg}"
+                    last_error = f"{clean_name} error ({res.status_code}): {err_msg}"
                     logger.warning(last_error)
             except Exception as e:
                 last_error = str(e)
-                logger.warning(f"Gagal memanggil {model_name}: {last_error}")
+                logger.warning(f"Gagal memanggil {clean_name}: {last_error}")
 
     raise HTTPException(
         status_code=status.HTTP_502_BAD_GATEWAY,
