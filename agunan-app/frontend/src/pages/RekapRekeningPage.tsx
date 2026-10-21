@@ -26,11 +26,19 @@ import {
   Eye,
   EyeOff,
   X,
+  Sparkles,
+  Cpu,
+  Key,
 } from 'lucide-react';
 import { RekapRekeningData, MonthRekap } from '../types/rekening';
 import { calculateMonthStats } from '../data/sampleRekeningData';
 import { exportRekeningToExcel } from '../utils/exportRekeningExcel';
 import { processUploadedBankStatements, PasswordRequiredError } from '../utils/bankStatementParser';
+import {
+  processStatementsWithGeminiAI,
+  getStoredGeminiApiKey,
+  setStoredGeminiApiKey,
+} from '../utils/geminiStatementParser';
 
 const formatRupiah = (val: number | null | undefined): string => {
   if (val === null || val === undefined || isNaN(val)) return '-';
@@ -59,6 +67,13 @@ export const RekapRekeningPage: React.FC = () => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [passwordProtectedFile, setPasswordProtectedFile] = useState<File | null>(null);
   const [passwordErrorMsg, setPasswordErrorMsg] = useState<string | null>(null);
+
+  // Google Gemini AI States
+  const [extractionMode, setExtractionMode] = useState<'auto' | 'gemini'>('auto');
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
+  const [geminiApiKey, setGeminiApiKey] = useState<string>(getStoredGeminiApiKey());
+  const [apiKeyInputDraft, setApiKeyInputDraft] = useState<string>(getStoredGeminiApiKey());
+  const [showApiKey, setShowApiKey] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -91,16 +106,31 @@ export const RekapRekeningPage: React.FC = () => {
     return statsMonth1.totalMutasiDebet + statsMonth2.totalMutasiDebet + statsMonth3.totalMutasiDebet;
   }, [statsMonth1, statsMonth2, statsMonth3]);
 
-  // Handle file processing with optional password
-  const handleFiles = async (files: File[], password?: string) => {
+  // Handle file processing with optional password or AI mode
+  const handleFiles = async (files: File[], password?: string, forceMode?: 'auto' | 'gemini') => {
     if (files.length === 0) return;
+    const activeMode = forceMode || extractionMode;
     try {
       setIsProcessing(true);
       setErrorMessage(null);
       setPasswordErrorMsg(null);
       setUploadedFiles(files);
 
-      const parsed = await processUploadedBankStatements(files, password);
+      let parsed: RekapRekeningData;
+
+      if (activeMode === 'gemini') {
+        const keyToUse = geminiApiKey.trim() || getStoredGeminiApiKey();
+        if (!keyToUse) {
+          setPendingFiles(files);
+          setIsApiKeyModalOpen(true);
+          setIsProcessing(false);
+          return;
+        }
+        parsed = await processStatementsWithGeminiAI(files, keyToUse);
+      } else {
+        parsed = await processUploadedBankStatements(files, password);
+      }
+
       setRekapData(parsed);
       setIsPasswordModalOpen(false);
       setPdfPasswordInput('');
@@ -216,19 +246,82 @@ export const RekapRekeningPage: React.FC = () => {
 
       {/* Upload Zone (Tampil jika belum ada data atau sedang ganti file) */}
       {!rekapData && (
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 sm:p-12 text-center transition-all">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-10 transition-all space-y-4">
+          {/* Mode Selector: Standar vs Google Gemini AI */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-bold text-slate-700">Mode Analisis:</span>
+              <div className="inline-flex p-1 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setExtractionMode('auto')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+                    extractionMode === 'auto'
+                      ? 'bg-white text-blue-700 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>⚡ Standar (Cepat)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExtractionMode('gemini');
+                    if (!geminiApiKey.trim()) setIsApiKeyModalOpen(true);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+                    extractionMode === 'gemini'
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>🤖 Google Gemini AI</span>
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setApiKeyInputDraft(geminiApiKey);
+                setIsApiKeyModalOpen(true);
+              }}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all flex items-center space-x-1.5 self-start sm:self-auto ${
+                geminiApiKey.trim()
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+              }`}
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>{geminiApiKey.trim() ? '✓ Google AI Key Tersimpan' : '🔑 Setel Google AI Studio Key'}</span>
+            </button>
+          </div>
+
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer ${isDragOver
-              ? 'border-blue-500 bg-blue-50/70 scale-[1.01]'
-              : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50/60'
-              }`}
+            className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer ${
+              isDragOver
+                ? 'border-blue-500 bg-blue-50/70 scale-[1.01]'
+                : extractionMode === 'gemini'
+                ? 'border-purple-300 hover:border-purple-500 hover:bg-purple-50/40 bg-purple-50/20'
+                : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50/60'
+            }`}
             onClick={() => fileInputRef.current?.click()}
           >
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
-              <UploadCloud className="w-8 h-8" />
+            <div
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm transition-colors ${
+                extractionMode === 'gemini' ? 'bg-purple-100 text-purple-600' : 'bg-blue-50 text-blue-600'
+              }`}
+            >
+              {extractionMode === 'gemini' ? (
+                <Sparkles className="w-8 h-8 text-purple-600" />
+              ) : (
+                <UploadCloud className="w-8 h-8" />
+              )}
             </div>
 
             <div className="space-y-1">
@@ -236,7 +329,15 @@ export const RekapRekeningPage: React.FC = () => {
                 Pilih atau Tarik File Rekening Koran ke Sini
               </h3>
               <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-                Mendukung berkas <strong>PDF e-statement</strong>, <strong>Excel (.xlsx, .xls)</strong>, atau <strong>CSV</strong> (Bisa 1 file 3 bulan atau hingga 3 file per bulan).
+                {extractionMode === 'gemini' ? (
+                  <span>
+                    Didukung <strong>Google Gemini AI</strong> (Membaca berkas <strong>PDF e-statement</strong>, <strong>hasil scan</strong>, hingga <strong>foto dokumen</strong>).
+                  </span>
+                ) : (
+                  <span>
+                    Mendukung berkas <strong>PDF e-statement</strong>, <strong>Excel (.xlsx, .xls)</strong>, atau <strong>CSV</strong> (Bisa 1 file 3 bulan atau hingga 3 file per bulan).
+                  </span>
+                )}
               </p>
             </div>
 
@@ -244,7 +345,7 @@ export const RekapRekeningPage: React.FC = () => {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".pdf,.xlsx,.xls,.csv,.txt"
+              accept=".pdf,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg,.webp"
               className="hidden"
               onChange={(e) => {
                 const files = Array.from(e.target.files || []);
@@ -255,29 +356,53 @@ export const RekapRekeningPage: React.FC = () => {
             <button
               type="button"
               disabled={isProcessing}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/25 transition-all flex items-center space-x-2"
+              className={`px-6 py-3 font-bold rounded-xl text-sm shadow-md transition-all flex items-center space-x-2 ${
+                extractionMode === 'gemini'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-500/25'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/25'
+              }`}
             >
-              <span>{isProcessing ? 'Memproses Berkas...' : 'Unggah File Rekening Koran'}</span>
+              <span>{isProcessing ? 'Memproses Berkas...' : extractionMode === 'gemini' ? 'Analisis dengan Gemini AI' : 'Unggah File Rekening Koran'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
           {errorMessage && (
-            <div className="mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between gap-3">
+            <div className="mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center space-x-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{errorMessage}</span>
               </div>
-              {/password/i.test(errorMessage) && (
-                <button
-                  type="button"
-                  onClick={() => setIsPasswordModalOpen(true)}
-                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center space-x-1 flex-shrink-0 shadow-sm"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Masukkan Password</span>
-                </button>
-              )}
+              <div className="flex items-center space-x-2 flex-shrink-0 self-end sm:self-auto">
+                {extractionMode === 'auto' && !/password/i.test(errorMessage) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExtractionMode('gemini');
+                      if (!geminiApiKey.trim()) {
+                        setIsApiKeyModalOpen(true);
+                      } else {
+                        const filesToRetry = uploadedFiles.length > 0 ? uploadedFiles : pendingFiles;
+                        if (filesToRetry.length > 0) handleFiles(filesToRetry, undefined, 'gemini');
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center space-x-1 shadow-sm"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Coba dengan Gemini AI</span>
+                  </button>
+                )}
+                {/password/i.test(errorMessage) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsPasswordModalOpen(true)}
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center space-x-1 shadow-sm"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Masukkan Password</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -688,6 +813,121 @@ export const RekapRekeningPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Google AI Studio API Key Settings Modal */}
+      {isApiKeyModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Google AI Studio API Key</h3>
+                  <p className="text-[11px] text-slate-500">Model Gemini 2.0 / 1.5 Flash (Gratis 1.500 req/hari)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsApiKeyModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Google Gemini AI mengekstrak data mutasi rekening koran dengan detail tinggi, termasuk dokumen hasil scan, foto miring, maupun format bank yang tidak standar.
+              </p>
+
+              <div className="p-3 bg-purple-50/70 border border-purple-200/80 rounded-2xl text-xs space-y-1">
+                <span className="font-bold text-purple-900">Cara dapat API Key Gratis:</span>
+                <p className="text-[11px] text-purple-800">
+                  Dapatkan API Key secara <strong>gratis tanpa kartu kredit</strong> di portal resmi Google AI Studio:
+                </p>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block text-[11px] font-bold text-purple-700 hover:text-purple-900 underline mt-1"
+                >
+                  👉 https://aistudio.google.com/app/apikey ↗
+                </a>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Masukkan Gemini API Key:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={apiKeyInputDraft}
+                    onChange={(e) => setApiKeyInputDraft(e.target.value)}
+                    placeholder="Contoh: AIzaSyB..."
+                    autoFocus
+                    className="w-full px-3.5 py-2.5 pr-10 bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 rounded-xl text-xs font-mono text-slate-800 outline-none transition-all placeholder:text-slate-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  API Key disimpan di peramban lokal Anda (localStorage) dan tidak dikirim ke pihak lain selain Google AI.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+              {geminiApiKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStoredGeminiApiKey('');
+                    setGeminiApiKey('');
+                    setApiKeyInputDraft('');
+                    setIsApiKeyModalOpen(false);
+                  }}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 mr-auto"
+                >
+                  Hapus Key
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsApiKeyModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const trimmed = apiKeyInputDraft.trim();
+                  setStoredGeminiApiKey(trimmed);
+                  setGeminiApiKey(trimmed);
+                  setIsApiKeyModalOpen(false);
+                  if (trimmed) {
+                    setExtractionMode('gemini');
+                    if (pendingFiles.length > 0) {
+                      handleFiles(pendingFiles, undefined, 'gemini');
+                    }
+                  }
+                }}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-500/25 transition-all"
+              >
+                Simpan & Gunakan
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     parameter,
     audit,
     market_search,
+    rekap_rekening,
 )
 
 api_router = APIRouter()
@@ -20,3 +21,4 @@ api_router.include_router(valuasi.router, prefix="/valuasi", tags=["Mesin Valuas
 api_router.include_router(parameter.router, prefix="/parameter", tags=["Parameter Valuasi"])
 api_router.include_router(audit.router, prefix="/audit", tags=["Audit Log & Kepatuhan"])
 api_router.include_router(market_search.router, prefix="/market-search", tags=["Pencarian Harga Pasar Bali"])
+api_router.include_router(rekap_rekening.router, prefix="/rekap-rekening", tags=["Rekap Rekening Koran AI"])

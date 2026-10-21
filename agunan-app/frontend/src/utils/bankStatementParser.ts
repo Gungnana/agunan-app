@@ -739,6 +739,18 @@ export async function processUploadedBankStatements(
     parsedResults.push(res);
   }
 
+  return buildThreeMonthRekap(parsedResults);
+}
+
+/**
+ * Reusable builder that constructs the exact side-by-side 3-month RekapRekeningData
+ * from one or more StatementParseResult objects (whether parsed locally or by Gemini AI).
+ */
+export function buildThreeMonthRekap(parsedResults: StatementParseResult[]): RekapRekeningData {
+  if (parsedResults.length === 0) {
+    throw new Error('Tidak ada data hasil pembacaan rekening koran.');
+  }
+
   // Combine metadata: take the first non-generic bank and debitur name
   const tabBank = parsedResults.find((r) => r.tabBank !== 'BANK UMUM')?.tabBank || parsedResults[0].tabBank;
   const namaDebitur = parsedResults.find((r) => r.namaDebitur && !r.namaDebitur.startsWith('NASABAH'))?.namaDebitur || parsedResults[0].namaDebitur;
@@ -771,7 +783,7 @@ export async function processUploadedBankStatements(
   const totalTxCount = allMonths.reduce((acc, m) => acc + m.txs.length, 0);
   if (totalTxCount === 0) {
     throw new Error(
-      `File berhasil teridentifikasi sebagai rekening ${tabBank}, namun data tabel transaksi tidak terbaca. Pastikan file merupakan e-statement PDF asli yang memuat teks mutasi digital (bukan hasil scan/foto tanpa OCR).`
+      `File berhasil teridentifikasi sebagai rekening ${tabBank}, namun data tabel transaksi tidak terbaca. Pastikan file merupakan e-statement PDF asli atau gunakan mode AI untuk membaca dokumen scan/foto.`
     );
   }
 
