@@ -260,6 +260,32 @@ export const RekapRekeningPage: React.FC = () => {
               <span>{isProcessing ? 'Memproses Berkas...' : 'Unggah File Rekening Koran'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+
+            {/* Quick Sample Downloads */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500" onClick={(e) => e.stopPropagation()}>
+              <span className="font-medium text-slate-600">Unduh Sampel Acuan:</span>
+              <a
+                href="/sample_rekening_bni.pdf"
+                download="sample_rekening_bni.pdf"
+                className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border border-slate-200 rounded-lg text-slate-700 font-semibold transition-all flex items-center space-x-1"
+              >
+                <span>Sample BNI (3 Bln)</span>
+              </a>
+              <a
+                href="/sample_rekening_mandiri.pdf"
+                download="sample_rekening_mandiri.pdf"
+                className="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-slate-200 rounded-lg text-slate-700 font-semibold transition-all flex items-center space-x-1"
+              >
+                <span>Sample Mandiri (3 Bln)</span>
+              </a>
+              <a
+                href="/sample_rekening_bpr_kertiawan.pdf"
+                download="sample_rekening_bpr_kertiawan.pdf"
+                className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 rounded-lg text-slate-700 font-semibold transition-all flex items-center space-x-1"
+              >
+                <span>Sample BPR (3 Bln)</span>
+              </a>
+            </div>
           </div>
 
           {errorMessage && (

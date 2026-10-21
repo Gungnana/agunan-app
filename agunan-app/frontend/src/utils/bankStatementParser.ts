@@ -88,7 +88,7 @@ export function cleanCurrency(val: any): number {
   }
 
   const num = parseFloat(str.replace(/[^0-9.-]/g, ''));
-  return isNaN(num) ? 0 : num;
+  return isNaN(num) ? 0 : Math.abs(num);
 }
 
 export interface ExtractedStatementMonth {
@@ -257,6 +257,7 @@ export async function parsePdfStatementWithCoordinates(
 
   // 2. Detect Account Number (No. Rekening)
   const rekPatterns = [
+    /(?:BNI\s+[A-Za-z0-9]+|TAPLUS(?:\s+[A-Za-z0-9]+)?|TAPPA)\s*[-:]\s*([0-9]{8,20})/i,
     /(?:Nomor\s*Rekening|No\.?\s*Rekening|No\.?\s*Rek|Account\s*No\.?|No\.\s*Acc|No\.?\s*Rekening\s*\/[^\n:]+|Rekening|Account)\s*[:.]?\s*([0-9.\-\s]{8,30})/i,
     /NO\.?\s*REKENING\s*:\s*([0-9.\-\s]+)/i,
     /(?:Rekening|Account)\s*[\r\n\s:]+([0-9.\-]{8,25})/i,
@@ -309,6 +310,47 @@ export async function parsePdfStatementWithCoordinates(
     }
   }
 
+  // Fallback BNI (e-Statement & Laporan Mutasi Rekening):
+  if (!namaDebitur && (tabBank === 'BNI' || /BNI/i.test(headerText)) && pagesData[0]) {
+    // 1. Cek baris yang mengandung BNI TAPPA / TAPLUS / No. Rekening: teks di sisi kiri (x < 350) adalah Nama Nasabah
+    for (const l of pagesData[0].lines) {
+      if (/BNI\s+TAPPA|BNI\s+TAPLUS|TAPPA\s*[-:]|TAPLUS\s*[-:]/i.test(l.text)) {
+        const leftItems = l.items.filter((it) => it.x < 350 && !/BNI|LAPORAN|MUTASI|PERIODE/i.test(it.str));
+        const cand = leftItems.map((it) => it.str).join(' ').trim();
+        if (cand.length >= 3 && !/\d{4,}/.test(cand) && !/BR\s*DINAS|DESA|JL\.|KEC/i.test(cand)) {
+          namaDebitur = cand;
+          break;
+        }
+      }
+    }
+    // 2. Baris di atas alamat nasabah (BR DINAS, DESA, JL., KEL., KEC.)
+    if (!namaDebitur) {
+      const lines = pagesData[0].lines;
+      const addrIdx = lines.findIndex((l) => /BR\s*DINAS|DESA\s+\d|JL\.|JALAN|KEL\.|KEC\./i.test(l.text));
+      if (addrIdx > 0) {
+        for (let i = addrIdx - 1; i >= 0 && i >= addrIdx - 3; i--) {
+          const cand = lines[i].text.replace(/BNI\s+TAPPA.*$/i, '').trim();
+          if (cand.length >= 3 && !/LAPORAN|MUTASI|PERIODE|BNI/i.test(cand) && !/\d{4,}/.test(cand)) {
+            namaDebitur = cand;
+            break;
+          }
+        }
+      }
+    }
+    // 3. Fallback DigiCS
+    if (!namaDebitur) {
+      for (const l of pagesData[0].lines) {
+        if (/TAPLUS|PRODUK/i.test(l.text)) {
+          const cand = l.text.split(/Produk|TAPLUS/i)[0].trim();
+          if (cand.length >= 3 && !/TANGGAL|REKENING|KEPADA|PERIODE/i.test(cand)) {
+            namaDebitur = cand;
+            break;
+          }
+        }
+      }
+    }
+  }
+
   // Fallback BRImo: Pada baris di bawah 'Kepada Yth. / To :', cari baris nama di sisi kiri (x < 300)
   if (!namaDebitur && pagesData[0]) {
     const lines = pagesData[0].lines;
@@ -322,19 +364,6 @@ export async function parsePdfStatementWithCoordinates(
         );
         const cand = leftItems.map((it) => it.str).join(' ').trim();
         if (cand.length >= 3 && !/BANJAR|DESA|JL\.|JALAN|RT\.|RW\.|KECAMATAN|KABUPATEN/i.test(cand)) {
-          namaDebitur = cand;
-          break;
-        }
-      }
-    }
-  }
-
-  // Fallback BNI DigiCS: cari baris sebelum label Produk / TAPLUS
-  if (!namaDebitur && pagesData[0]) {
-    for (const l of pagesData[0].lines) {
-      if (/TAPLUS|PRODUK/i.test(l.text)) {
-        const cand = l.text.split(/Produk|TAPLUS/i)[0].trim();
-        if (cand.length >= 3 && !/TANGGAL|REKENING|KEPADA|PERIODE/i.test(cand)) {
           namaDebitur = cand;
           break;
         }
@@ -493,19 +522,93 @@ export async function parsePdfStatementWithCoordinates(
     let runningBalance = detectedGlobalSaldoAwal || 0;
 
     for (const page of pagesData) {
-      for (const line of page.lines) {
+      // Check if page defines a Period (e.g. Periode: 1 - 30 November 2025)
+      let pageMonthNum: number | null = null;
+      let pageYear = currentYear;
+      for (const l of page.lines) {
+        const mPer = l.text.match(/Periode\s*:\s*[0-9\-\s]+([A-Za-z]{3,})\s*(\d{4})/i);
+        if (mPer) {
+          const mToken = mPer[1].toLowerCase();
+          if (MONTH_WORD_MAP[mToken]) {
+            pageMonthNum = MONTH_WORD_MAP[mToken];
+            pageYear = parseInt(mPer[2], 10);
+            break;
+          }
+        }
+      }
+
+      // Check 4-Box Summary Card (BNI & similar formats: Saldo Awal, Total Pemasukan, Total Pengeluaran, Saldo Akhir)
+      const lblLineIdx = page.lines.findIndex((l) =>
+        /Saldo\s*Awal/i.test(l.text) &&
+        /Total\s*Pemasukan/i.test(l.text) &&
+        /Total\s*Pengeluaran/i.test(l.text) &&
+        /Saldo\s*Akhir/i.test(l.text)
+      );
+      if (lblLineIdx !== -1 && page.lines[lblLineIdx + 1]) {
+        const valLine = page.lines[lblLineIdx + 1];
+        // Extract 4 values
+        const vTokens = valLine.text.match(/(?:[+-]?\s*\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?|[+-]?\s*\d+)/g);
+        if (vTokens && vTokens.length >= 4) {
+          const sa = cleanCurrency(vTokens[0]);
+          const masuk = cleanCurrency(vTokens[1]);
+          const keluar = cleanCurrency(vTokens[2]);
+          const sk = cleanCurrency(vTokens[3]);
+
+          if (pageMonthNum) {
+            const mKey = `${pageYear}-${String(pageMonthNum).padStart(2, '0')}`;
+            if (!monthlyMap[mKey]) {
+              monthlyMap[mKey] = {
+                monthName: `${MONTH_NAMES[pageMonthNum - 1]} ${pageYear}`,
+                monthNumber: pageMonthNum,
+                year: pageYear,
+                saldoAwal: sa,
+                saldoAkhir: sk,
+                txs: [],
+              };
+            }
+            monthlyMap[mKey].saldoAwal = sa;
+            monthlyMap[mKey].saldoAkhir = sk;
+            monthlyMap[mKey].officialSummary = {
+              saldoAwal: sa,
+              mutasiCr: masuk,
+              mutasiDb: keluar,
+              saldoAkhir: sk,
+            };
+          }
+        }
+      }
+
+      for (let lineIdx = 0; lineIdx < page.lines.length; lineIdx++) {
+        const line = page.lines[lineIdx];
         const text = line.text;
+
+        // Skip 4-box card labels and card values
+        if (
+          /Saldo\s*Awal/i.test(text) &&
+          /Total\s*Pemasukan/i.test(text) &&
+          /Total\s*Pengeluaran/i.test(text) &&
+          /Saldo\s*Akhir/i.test(text)
+        ) {
+          continue;
+        }
 
         // Skip headers & footers & page numbers
         if (
-          /SALDO AWAL|MUTASI CR|MUTASI DB|SALDO AKHIR|PERIODE TRANSAKSI|KETERANGAN\s+DEBET\s+KREDIT|HALAMAN\s*\d+\s*DARI|HAL\s*[:.]?\s*\d+\s*DARI/i.test(
+          /MUTASI CR|MUTASI DB|PERIODE TRANSAKSI|KETERANGAN\s+DEBET\s+KREDIT|HALAMAN\s*\d+\s*DARI|HAL\s*[:.]?\s*\d+\s*DARI/i.test(
             text
           )
         ) {
-          // Check if this line defines Saldo Awal
-          const mSA = text.match(/(?:SALDO\s*AWAL|INITIAL\s*BALANCE)(?:\s*\/[^\n:]+)?\s*[:.]?\s*([0-9.,]+)/i);
+          continue;
+        }
+
+        // Check if this line defines single Saldo Awal row in table
+        if (/Saldo\s*Awal/i.test(text) && !/Total/i.test(text)) {
+          const mSA = text.match(/(?:SALDO\s*AWAL|INITIAL\s*BALANCE)(?:\s*\/[^\n:]+)?\s*[:.]?\s*(?:IDR|RP)?\s*([0-9.,]+)/i);
           if (mSA) {
             runningBalance = cleanCurrency(mSA[1]);
+          } else {
+            const saNum = text.match(/\b\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?\b/);
+            if (saNum) runningBalance = cleanCurrency(saNum[0]);
           }
           continue;
         }
@@ -566,13 +669,13 @@ export async function parsePdfStatementWithCoordinates(
 
         if (!day || !month || day < 1 || day > 31 || month < 1 || month > 12) continue;
 
-        // Clean time patterns (e.g. 06:21:30) so they don't interfere with currency tokens
-        textWithoutDate = textWithoutDate.replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, ' ');
+        // Clean time patterns (e.g. 06:21:30 WIB) so they don't interfere with currency tokens
+        textWithoutDate = textWithoutDate.replace(/\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:WIB|WITA|WIT)?\b/gi, ' ');
 
         // Extract currency numbers on the line:
-        // Supports: 0.00 / 0,00 / 1.234.567,89 / 1,234,567.89 / 15.000.000 / 250,000 / 50.000
+        // Supports: +16, -1,000, +473,500, 1,133,477, 0.00 / 0,00 / 1.234.567,89 / 1,234,567.89 / 15.000.000 / 250,000 / 50.000
         let numTokens = textWithoutDate.match(
-          /\b(?:0[.,]00|\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d+[.,]\d{2})\b/g
+          /(?:[+-]\s*\d+(?:[.,]\d{3})*(?:[.,]\d{2})?|\b(?:0[.,]00|\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d+[.,]\d{2})\b)/g
         );
 
         // Fallback: If no dotted/comma numbers found, look for plain 5+ digit integers (>= 10,000)
@@ -659,10 +762,23 @@ export async function parsePdfStatementWithCoordinates(
           };
         }
 
-        const cleanDesc = textWithoutDate
-          .replace(/\b(?:0[.,]00|\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d+[.,]\d{2})\b/g, '')
-          .replace(/\b(D|K|DB|CR)\b/g, '')
+        let cleanDesc = textWithoutDate
+          .replace(/[+-]\s*\d+(?:[.,]\d{3})*(?:[.,]\d{2})?/g, ' ')
+          .replace(/\b(?:0[.,]00|\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d+[.,]\d{2})\b/g, ' ')
+          .replace(/\b(D|K|DB|CR)\b/g, ' ')
           .trim();
+
+        // Check if next line is a subline (e.g. "10:28:10 WIB MANDIRI -")
+        const nextLine = page.lines[lineIdx + 1];
+        if (nextLine && !nextLine.text.match(/(?:^|\s)\d{1,2}[\/\-\.\s][A-Za-z]{3,}|\b\d{1,2}[\/\-]\d{1,2}\b/)) {
+          const subText = nextLine.text
+            .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:WIB|WITA|WIT)?\b/gi, '')
+            .replace(/PT Bank Negara.*$/i, '')
+            .trim();
+          if (subText.length > 2 && !/Saldo Awal|Informasi|Total/i.test(subText)) {
+            cleanDesc = (cleanDesc + ' ' + subText).trim();
+          }
+        }
 
         monthlyMap[monthKey].txs.push({
           date: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`,
