@@ -592,9 +592,9 @@ export async function parsePdfStatementWithCoordinates(
           continue;
         }
 
-        // Skip headers & footers & page numbers
+        // Skip headers & footers & page numbers & metadata lines
         if (
-          /MUTASI CR|MUTASI DB|PERIODE TRANSAKSI|KETERANGAN\s+DEBET\s+KREDIT|HALAMAN\s*\d+\s*DARI|HAL\s*[:.]?\s*\d+\s*DARI/i.test(
+          /MUTASI CR|MUTASI DB|PERIODE TRANSAKSI|KETERANGAN\s+DEBET\s+KREDIT|HALAMAN\s*\d+\s*DARI|HAL\s*[:.]?\s*\d+\s*DARI|Periode\s*(?:\/|\:)|Period|Dicetak\s*pada|Issued\s*on|Cabang\s*\/\s*Branch|Tanggal\s*\/\s*Date|Initial\s*Balance|Closing\s*Balance|Incoming\s*Transactions|Outgoing\s*Transactions|Dana\s*Masuk|Dana\s*Keluar/i.test(
             text
           )
         ) {
@@ -705,7 +705,7 @@ export async function parsePdfStatementWithCoordinates(
           const mutasi = amounts[0];
           const hasDbFlag = /\b(D|DB|DEBET|DEBIT)\b/i.test(text);
           const hasCrFlag = /\b(CR|K|KREDIT|CREDIT)\b/i.test(text);
-          const hasMinusFlag = /-\s*[\d.,]+/.test(textWithoutDate);
+          const hasMinusFlag = /[-\u2212\u2013\u2014]\s*[\d.,]+/.test(textWithoutDate);
           const hasPlusFlag = /\+\s*[\d.,]+/.test(textWithoutDate);
 
           if (hasMinusFlag || hasDbFlag) {
@@ -714,12 +714,19 @@ export async function parsePdfStatementWithCoordinates(
             kredit = mutasi;
           } else {
             // Arithmetic check: if saldo went down, it's debet. If went up, kredit.
-            if (runningBalance > 0) {
+            if (runningBalance > 0 && saldo !== undefined) {
               if (saldo < runningBalance) debet = mutasi;
-              else kredit = mutasi;
+              else if (saldo > runningBalance) kredit = mutasi;
+              else {
+                if (/\b(TARIK|BIAYA|ADM|PAJAK|TRF KE|TRANSFER KE|PEMBELIAN|DEBIT|PINJAMAN)\b/i.test(text)) {
+                  debet = mutasi;
+                } else {
+                  kredit = mutasi;
+                }
+              }
             } else {
               // Keyword heuristic
-              if (/\b(TARIK|BIAYA|ADM|PAJAK|TRF KE|TRANSFER KE|PEMBELIAN|DEBIT)\b/i.test(text)) {
+              if (/\b(TARIK|BIAYA|ADM|PAJAK|TRF KE|TRANSFER KE|PEMBELIAN|DEBIT|PINJAMAN)\b/i.test(text)) {
                 debet = mutasi;
               } else {
                 kredit = mutasi;
@@ -730,11 +737,13 @@ export async function parsePdfStatementWithCoordinates(
           const mutasi = amounts[0];
           const hasDbFlag = /\b(D|DB|DEBET|DEBIT)\b/i.test(text);
           const hasCrFlag = /\b(CR|K|KREDIT|CREDIT)\b/i.test(text);
-          if (hasDbFlag) {
+          const hasMinusFlag = /[-\u2212\u2013\u2014]\s*[\d.,]+/.test(textWithoutDate);
+          const hasPlusFlag = /\+\s*[\d.,]+/.test(textWithoutDate);
+          if (hasMinusFlag || hasDbFlag) {
             debet = mutasi;
-          } else if (hasCrFlag) {
+          } else if (hasPlusFlag || hasCrFlag) {
             kredit = mutasi;
-          } else if (/\b(TARIK|BIAYA|ADM|PAJAK|TRF KE|TRANSFER KE|PEMBELIAN)\b/i.test(text)) {
+          } else if (/\b(TARIK|BIAYA|ADM|PAJAK|TRF KE|TRANSFER KE|PEMBELIAN|PINJAMAN)\b/i.test(text)) {
             debet = mutasi;
           } else {
             kredit = mutasi;
