@@ -13,7 +13,6 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   TrendingUp,
@@ -29,16 +28,7 @@ import {
   X,
 } from 'lucide-react';
 import { RekapRekeningData, MonthRekap } from '../types/rekening';
-import {
-  SAMPLE_REKAP_DATA,
-  SAMPLE_MOH_ASMIK_DATA,
-  SAMPLE_BNI_DATA,
-  SAMPLE_MANDIRI_DATA,
-  SAMPLE_BRI_DATA,
-  SAMPLE_BPD_BALI_DATA,
-  SAMPLE_BPR_KERTIAWAN_DATA,
-  calculateMonthStats
-} from '../data/sampleRekeningData';
+import { calculateMonthStats } from '../data/sampleRekeningData';
 import { exportRekeningToExcel } from '../utils/exportRekeningExcel';
 import { processUploadedBankStatements, PasswordRequiredError } from '../utils/bankStatementParser';
 
@@ -168,52 +158,6 @@ export const RekapRekeningPage: React.FC = () => {
     }
   };
 
-  // Quick test demo
-  const handleUseSample = (
-    type: 'bni' | 'moh_asmik' | 'mandiri' | 'bri' | 'bpd_bali' | 'kertiawan' | 'heriyanto' = 'kertiawan'
-  ) => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      if (type === 'kertiawan') {
-        setUploadedFiles([
-          new File(['sample_bpr_kertiawan'], 'sample_rekening_bpr_kertiawan.pdf', { type: 'application/pdf' }),
-        ]);
-        setRekapData(SAMPLE_BPR_KERTIAWAN_DATA);
-      } else if (type === 'bni') {
-        setUploadedFiles([
-          new File(['sample_bni_yudi'], 'S1SMKDPS04_BNI_CetakMutasi_Form_9723008.PDF', { type: 'application/pdf' }),
-        ]);
-        setRekapData(SAMPLE_BNI_DATA);
-      } else if (type === 'moh_asmik') {
-        setUploadedFiles([
-          new File(['sample_bca_moh_asmik'], 'Rekening_Tahapan_BCA_MOH_ASMIK.pdf', { type: 'application/pdf' }),
-        ]);
-        setRekapData(SAMPLE_MOH_ASMIK_DATA);
-      } else if (type === 'mandiri') {
-        setUploadedFiles([
-          new File(['sample_mandiri_suardika'], 'Rekening_Koran_Mandiri_I_MADE_SUARDIKA.pdf', { type: 'application/pdf' }),
-        ]);
-        setRekapData(SAMPLE_MANDIRI_DATA);
-      } else if (type === 'bri') {
-        setUploadedFiles([
-          new File(['sample_bri_dewi'], 'Rekening_Koran_BRI_BritAma_NI_LUH_PUTU_DEWI.pdf', { type: 'application/pdf' }),
-        ]);
-        setRekapData(SAMPLE_BRI_DATA);
-      } else if (type === 'bpd_bali') {
-        setUploadedFiles([
-          new File(['sample_bpd_ardana'], 'Rekening_Koran_BPD_BALI_I_KETUT_ARDANA.pdf', { type: 'application/pdf' }),
-        ]);
-        setRekapData(SAMPLE_BPD_BALI_DATA);
-      } else {
-        setUploadedFiles([
-          new File(['sample_bca_heriyanto'], 'Rekening_Koran_BCA_Heriyanto.pdf', { type: 'application/pdf' }),
-        ]);
-        setRekapData(SAMPLE_REKAP_DATA);
-      }
-      setIsProcessing(false);
-    }, 200);
-  };
-
   // Download Excel
   const handleDownloadExcel = async () => {
     if (!rekapData) return;
@@ -317,64 +261,6 @@ export const RekapRekeningPage: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Quick Demo Test Option Multi-Bank */}
-          <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col items-center justify-center space-y-2.5 text-xs text-slate-500">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <span className="font-semibold text-slate-700 flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Sampel Rekening Koran BPR Bank Kertiawan:</span>
-              </span>
-              <a
-                href="/sample_rekening_bpr_kertiawan.pdf"
-                download="sample_rekening_bpr_kertiawan.pdf"
-                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-semibold text-[11px] inline-flex items-center space-x-1 border border-slate-200 transition-colors"
-                title="Unduh file PDF acuan BPR Bank Kertiawan"
-              >
-                <Download className="w-3 h-3 text-slate-500" />
-                <span>Unduh PDF Acuan</span>
-              </a>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleUseSample('kertiawan')}
-                className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold transition-all shadow-sm flex items-center space-x-1.5 text-xs"
-              >
-                <span>⭐ Coba Rekap BPR Bank Kertiawan (I Wayan Ardika)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUseSample('bni')}
-                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-lg font-medium transition-all"
-              >
-                BNI (Putu Yudi)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUseSample('moh_asmik')}
-                className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-lg font-medium transition-all"
-              >
-                BCA (Moh Asmik)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUseSample('mandiri')}
-                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 rounded-lg font-medium transition-all"
-              >
-                Mandiri (Made Suardika)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUseSample('bri')}
-                className="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 rounded-lg font-medium transition-all"
-              >
-                BRI (Luh Putu Dewi)
-              </button>
-            </div>
-          </div>
-
-
 
           {errorMessage && (
             <div className="mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between gap-3">
