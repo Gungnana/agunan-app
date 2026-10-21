@@ -16,20 +16,20 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
   // Month 2: G..K, L: spacer
   // Month 3: M..Q
   const colWidths: { [col: string]: number } = {
-    A: 6,   // No
-    B: 14,  // Tanggal
+    A: 7,   // No
+    B: 15,  // Tanggal
     C: 18,  // Debet
     D: 18,  // Kredit
     E: 18,  // Saldo
     F: 4,   // Spacer
-    G: 6,   // No
-    H: 14,  // Tanggal
+    G: 7,   // No
+    H: 15,  // Tanggal
     I: 18,  // Debet
     J: 18,  // Kredit
     K: 18,  // Saldo
     L: 4,   // Spacer
-    M: 6,   // No
-    N: 14,  // Tanggal
+    M: 7,   // No
+    N: 15,  // Tanggal
     O: 18,  // Debet
     P: 18,  // Kredit
     Q: 18,  // Saldo
@@ -73,37 +73,58 @@ export async function exportRekeningToExcel(data: RekapRekeningData): Promise<Bl
     titleCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF000000' } };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // Row 2: Nama Debitur
-    const r2Label = sheet.getCell(`${c.startCol}2`);
+    // Row 2: Nama Debitur (Merged A:B for label, C:E for value)
+    sheet.mergeCells(`${c.noCol}2:${c.tglCol}2`);
+    const r2Label = sheet.getCell(`${c.noCol}2`);
     r2Label.value = 'Nama Debitur :';
     r2Label.font = { name: 'Arial', size: 10, bold: true };
-    const r2Val = sheet.getCell(`${c.tglCol}2`);
-    r2Val.value = data.namaDebitur;
-    r2Val.font = { name: 'Arial', size: 10 };
+    r2Label.alignment = { horizontal: 'left', vertical: 'middle' };
 
-    // Row 3: Tab. Bank
-    const r3Label = sheet.getCell(`${c.startCol}3`);
+    sheet.mergeCells(`${c.debCol}2:${c.salCol}2`);
+    const r2Val = sheet.getCell(`${c.debCol}2`);
+    r2Val.value = data.namaDebitur;
+    r2Val.font = { name: 'Arial', size: 10, bold: true };
+    r2Val.alignment = { horizontal: 'left', vertical: 'middle' };
+
+    // Row 3: Tab. Bank (Merged A:B for label, C:E for value)
+    sheet.mergeCells(`${c.noCol}3:${c.tglCol}3`);
+    const r3Label = sheet.getCell(`${c.noCol}3`);
     r3Label.value = 'Tab. Bank :';
     r3Label.font = { name: 'Arial', size: 10, bold: true };
-    const r3Val = sheet.getCell(`${c.tglCol}3`);
+    r3Label.alignment = { horizontal: 'left', vertical: 'middle' };
+
+    sheet.mergeCells(`${c.debCol}3:${c.salCol}3`);
+    const r3Val = sheet.getCell(`${c.debCol}3`);
     r3Val.value = data.tabBank;
     r3Val.font = { name: 'Arial', size: 10 };
+    r3Val.alignment = { horizontal: 'left', vertical: 'middle' };
 
-    // Row 4: No. Rek
-    const r4Label = sheet.getCell(`${c.startCol}4`);
+    // Row 4: No. Rek (Merged A:B for label, C:E for value)
+    sheet.mergeCells(`${c.noCol}4:${c.tglCol}4`);
+    const r4Label = sheet.getCell(`${c.noCol}4`);
     r4Label.value = 'No. Rek :';
     r4Label.font = { name: 'Arial', size: 10, bold: true };
-    const r4Val = sheet.getCell(`${c.tglCol}4`);
-    r4Val.value = `'${data.noRek}`; // string literal
-    r4Val.font = { name: 'Arial', size: 10 };
+    r4Label.alignment = { horizontal: 'left', vertical: 'middle' };
 
-    // Row 5: Bulan
-    const r5Label = sheet.getCell(`${c.startCol}5`);
+    sheet.mergeCells(`${c.debCol}4:${c.salCol}4`);
+    const r4Val = sheet.getCell(`${c.debCol}4`);
+    r4Val.value = String(data.noRek || '');
+    r4Val.numFmt = '@';
+    r4Val.font = { name: 'Arial', size: 10 };
+    r4Val.alignment = { horizontal: 'left', vertical: 'middle' };
+
+    // Row 5: Bulan (Merged A:B for label, C:E for value)
+    sheet.mergeCells(`${c.noCol}5:${c.tglCol}5`);
+    const r5Label = sheet.getCell(`${c.noCol}5`);
     r5Label.value = 'Bulan :';
     r5Label.font = { name: 'Arial', size: 10, bold: true };
-    const r5Val = sheet.getCell(`${c.tglCol}5`);
+    r5Label.alignment = { horizontal: 'left', vertical: 'middle' };
+
+    sheet.mergeCells(`${c.debCol}5:${c.salCol}5`);
+    const r5Val = sheet.getCell(`${c.debCol}5`);
     r5Val.value = m.monthName;
     r5Val.font = { name: 'Arial', size: 10 };
+    r5Val.alignment = { horizontal: 'left', vertical: 'middle' };
 
     // Row 7: Table Headers
     const headers = [
