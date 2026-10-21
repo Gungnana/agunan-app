@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, ShieldCheck, WalletCards } from 'lucide-react';
+import { MapPin, WalletCards } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
@@ -26,10 +26,9 @@ export const Sidebar: React.FC = () => {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-700 shadow-sm font-semibold'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  `flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
+                    ? 'bg-blue-50 text-blue-700 shadow-sm font-semibold'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`
                 }
               >
@@ -38,15 +37,6 @@ export const Sidebar: React.FC = () => {
               </NavLink>
             );
           })}
-      </div>
-
-      {/* Compliance Badge Footnote */}
-      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-500 flex items-start space-x-2">
-        <ShieldCheck className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-        <div>
-          <div className="font-semibold text-slate-700">Area layanan Bali</div>
-          <p className="text-[11px] text-slate-400 mt-0.5">Hasil pencarian menautkan ke sumber internet.</p>
-        </div>
       </div>
     </aside>
   );

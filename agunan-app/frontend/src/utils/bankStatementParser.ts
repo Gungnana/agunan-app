@@ -357,7 +357,7 @@ export async function parsePdfStatementWithCoordinates(
   }
 
   // 4. Detect Saldo Awal from statement text
-  const mSaldoAwal = allPagesText.match(/(?:SALDO\s*AWAL|OPENING\s*BALANCE)\s*[:.]?\s*(?:IDR|RP)?\s*([0-9.,]+)/i);
+  const mSaldoAwal = allPagesText.match(/(?:SALDO\s*AWAL|OPENING\s*BALANCE|INITIAL\s*BALANCE)(?:\s*\/[^\n:]+)?\s*[:.]?\s*(?:IDR|RP)?\s*([0-9.,]+)/i);
   if (mSaldoAwal) {
     detectedGlobalSaldoAwal = cleanCurrency(mSaldoAwal[1]);
   }
@@ -503,48 +503,63 @@ export async function parsePdfStatementWithCoordinates(
           )
         ) {
           // Check if this line defines Saldo Awal
-          const mSA = text.match(/SALDO\s*AWAL\s*[:.]?\s*([0-9.,]+)/i);
+          const mSA = text.match(/(?:SALDO\s*AWAL|INITIAL\s*BALANCE)(?:\s*\/[^\n:]+)?\s*[:.]?\s*([0-9.,]+)/i);
           if (mSA) {
             runningBalance = cleanCurrency(mSA[1]);
           }
           continue;
         }
 
-        // Match date: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, DD MM YYYY, DD/MM
+        // Match date:
+        // Priority 1: Named month e.g. 04 Aug 2026, 31 Jul 2026, 09 Sep 2026, 04-Aug-2026
+        // Priority 2: ISO YYYY-MM-DD
+        // Priority 3: Delimited numeric date DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY (delimited by / - ., never whitespace)
         let day: number | null = null;
         let month: number | null = null;
         let year: number = currentYear;
         let textWithoutDate = text;
 
-        const isoMatch = text.match(/(?:^|\s)(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:\s|$)/);
-        if (isoMatch) {
-          year = parseInt(isoMatch[1], 10);
-          month = parseInt(isoMatch[2], 10);
-          day = parseInt(isoMatch[3], 10);
-          textWithoutDate = text.replace(isoMatch[0], ' ');
-        } else {
-          const dMatch = text.match(
-            /(?:^|\s)(\d{1,2})[\/\-\.\s]([A-Za-z]+|\d{1,2})(?:[\/\-\.\s](\d{2,4}))?(?:\s|$)/
-          );
-          if (dMatch) {
-            const d = parseInt(dMatch[1], 10);
-            const mToken = dMatch[2].toLowerCase();
-            let m = parseInt(mToken, 10);
-            if (isNaN(m)) {
-              if (MONTH_WORD_MAP[mToken]) {
-                m = MONTH_WORD_MAP[mToken];
-              } else {
-                continue; // Not a valid month name (e.g. 'dari', 'ke', etc.)
-              }
+        const namedMatch = text.match(
+          /(?:^|\s)(\d{1,2})[\/\-\.\s]([A-Za-z]{3,})(?:[\/\-\.\s](\d{2,4}))?(?:\s|$)/
+        );
+        if (namedMatch) {
+          const d = parseInt(namedMatch[1], 10);
+          const mToken = namedMatch[2].toLowerCase();
+          if (MONTH_WORD_MAP[mToken] && d >= 1 && d <= 31) {
+            day = d;
+            month = MONTH_WORD_MAP[mToken];
+            if (namedMatch[3]) {
+              const yStr = namedMatch[3];
+              year = yStr.length === 2 ? 2000 + parseInt(yStr, 10) : parseInt(yStr, 10);
             }
-            if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
-              day = d;
-              month = m;
-              if (dMatch[3]) {
-                const yStr = dMatch[3];
-                year = yStr.length === 2 ? 2000 + parseInt(yStr, 10) : parseInt(yStr, 10);
+            textWithoutDate = text.replace(namedMatch[0], ' ');
+          }
+        }
+
+        if (!day) {
+          const isoMatch = text.match(/(?:^|\s)(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:\s|$)/);
+          if (isoMatch) {
+            year = parseInt(isoMatch[1], 10);
+            month = parseInt(isoMatch[2], 10);
+            day = parseInt(isoMatch[3], 10);
+            textWithoutDate = text.replace(isoMatch[0], ' ');
+          } else {
+            // Strictly delimited numeric date (slash, dash, dot - NOT whitespace)
+            const numMatch = text.match(
+              /(?:^|\s)(\d{1,2})[\/\-\.](\d{1,2})(?:[\/\-\.](\d{2,4}))?(?:\s|$)/
+            );
+            if (numMatch) {
+              const d = parseInt(numMatch[1], 10);
+              const m = parseInt(numMatch[2], 10);
+              if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
+                day = d;
+                month = m;
+                if (numMatch[3]) {
+                  const yStr = numMatch[3];
+                  year = yStr.length === 2 ? 2000 + parseInt(yStr, 10) : parseInt(yStr, 10);
+                }
+                textWithoutDate = text.replace(numMatch[0], ' ');
               }
-              textWithoutDate = text.replace(dMatch[0], ' ');
             }
           }
         }
@@ -582,15 +597,17 @@ export async function parsePdfStatementWithCoordinates(
           kredit = amounts[amounts.length - 2];
           debet = amounts[amounts.length - 3];
         } else if (amounts.length === 2) {
-          // Format: [Amount, Saldo] with D/K or DB/CR marker or comparison with running balance
+          // Format: [Amount, Saldo] with D/K, DB/CR, +/- sign marker, or comparison with running balance
           saldo = amounts[1];
           const mutasi = amounts[0];
           const hasDbFlag = /\b(D|DB|DEBET|DEBIT)\b/i.test(text);
           const hasCrFlag = /\b(CR|K|KREDIT|CREDIT)\b/i.test(text);
+          const hasMinusFlag = /-\s*[\d.,]+/.test(textWithoutDate);
+          const hasPlusFlag = /\+\s*[\d.,]+/.test(textWithoutDate);
 
-          if (hasDbFlag) {
+          if (hasMinusFlag || hasDbFlag) {
             debet = mutasi;
-          } else if (hasCrFlag) {
+          } else if (hasPlusFlag || hasCrFlag) {
             kredit = mutasi;
           } else {
             // Arithmetic check: if saldo went down, it's debet. If went up, kredit.
