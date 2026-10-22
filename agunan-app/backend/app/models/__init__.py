@@ -6,6 +6,7 @@ from app.models.pembanding import Pembanding, SumberData, JenisHarga, KualitasGe
 from app.models.parameter import ParameterValuasi
 from app.models.valuasi import Valuasi, ValuasiPembanding, ValuasiStatus
 from app.models.audit import AuditLog
+from app.models.rejection_log import RejectionLog
 
 __all__ = [
     "Base",
@@ -26,4 +27,5 @@ __all__ = [
     "ValuasiPembanding",
     "ValuasiStatus",
     "AuditLog",
+    "RejectionLog",
 ]

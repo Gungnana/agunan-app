@@ -12,6 +12,7 @@ import { ComparableDatabasePage } from './pages/ComparableDatabasePage';
 import { ParameterPage } from './pages/ParameterPage';
 import { AuditLogPage } from './pages/AuditLogPage';
 import { RekapRekeningPage } from './pages/RekapRekeningPage';
+import { LogbookRejectionPage } from './pages/LogbookRejectionPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,6 +115,14 @@ export const App: React.FC = () => {
               element={
                 <ProtectedLayout>
                   <RekapRekeningPage />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/logbook-rejection"
+              element={
+                <ProtectedLayout>
+                  <LogbookRejectionPage />
                 </ProtectedLayout>
               }
             />
