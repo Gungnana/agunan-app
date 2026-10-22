@@ -16,10 +16,13 @@ import {
   Building,
   User,
   ShieldAlert,
+  FileText,
+  Printer,
 } from 'lucide-react';
 import { RejectionLogItem } from '../types/rejectionLog';
 import { rejectionLogApi, computeRejectionStats } from '../api/rejectionLogApi';
 import { exportRejectionLogToExcel } from '../utils/exportRejectionExcel';
+import { downloadMemoPenolakanPdf } from '../utils/generateMemoPdf';
 
 const formatRupiah = (val: number | null | undefined): string => {
   if (val === null || val === undefined || isNaN(val)) return 'Rp 0';
@@ -46,6 +49,21 @@ export const LogbookRejectionPage: React.FC = () => {
   const [editingItem, setEditingItem] = useState<RejectionLogItem | null>(null);
   const [detailItem, setDetailItem] = useState<RejectionLogItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
+
+  const handleGenerateMemo = async (item: RejectionLogItem) => {
+    try {
+      setIsGeneratingPdf(true);
+      showToast(`Membuat Memo Penolakan untuk ${item.nama}...`);
+      await downloadMemoPenolakanPdf(item);
+      showToast(`Memo Penolakan ${item.nama} (F4) berhasil diunduh!`);
+    } catch (err: any) {
+      console.error('Error generating memo PDF:', err);
+      alert('Gagal membuat memo penolakan: ' + (err.message || 'Terjadi kesalahan sistem.'));
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   // Form State according to BPR Bank Kertiawan row fields
   const [formData, setFormData] = useState({
@@ -619,6 +637,13 @@ export const LogbookRejectionPage: React.FC = () => {
                       <td className="py-3 px-3 text-center">
                         <div className="flex items-center justify-center space-x-1">
                           <button
+                            onClick={() => handleGenerateMemo(item)}
+                            title="Generate Memo Penolakan (PDF F4)"
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-rose-500" />
+                          </button>
+                          <button
                             onClick={() => setDetailItem(item)}
                             title="Lihat Detail"
                             className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
@@ -1040,7 +1065,17 @@ export const LogbookRejectionPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 text-right">
+              <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => handleGenerateMemo(detailItem)}
+                  disabled={isGeneratingPdf}
+                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>{isGeneratingPdf ? 'Membuat Memo...' : 'Cetak Memo Penolakan (PDF F4)'}</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setDetailItem(null)}
