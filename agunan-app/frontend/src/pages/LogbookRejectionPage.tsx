@@ -296,16 +296,9 @@ export const LogbookRejectionPage: React.FC = () => {
         <div className="absolute right-0 top-0 -mt-10 -mr-10 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 bg-rose-500/20 border border-rose-400/30 rounded-full text-rose-300 text-xs font-semibold">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>BPR BANK KERTIAWAN</span>
-            </div>
+
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Daftar Permohonan Ditolak
-            </h1>
-            <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Buku register resmi pencatatan permohonan kredit yang ditolak, mencakup data nasabah, plafon, peruntukan kredit, alasan detail penolakan, kapasitas, jaminan, informasi negatif, kantor, kepala cabang, dan analis.
-            </p>
+              Daftar Permohonan Ditolak </h1>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -592,13 +585,12 @@ export const LogbookRejectionPage: React.FC = () => {
 
                       {/* KAPASITAS */}
                       <td className="py-3 px-3 text-center border-r border-slate-100">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          item.kapasitas === 'DITERIMA'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : item.kapasitas === 'BATAL PENGAJUAN'
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.kapasitas === 'DITERIMA'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : item.kapasitas === 'BATAL PENGAJUAN'
                             ? 'bg-amber-100 text-amber-800'
                             : 'bg-rose-100 text-rose-800'
-                        }`}>
+                          }`}>
                           {item.kapasitas}
                         </span>
                       </td>

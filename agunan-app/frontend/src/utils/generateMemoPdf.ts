@@ -111,20 +111,30 @@ export async function generateMemoPenolakanPdf(item: RejectionLogItem): Promise<
     }
   }
 
-  // 1. Add Bank Logo at top left
+  // 1. Add Bank Logo at top left with exact natural aspect ratio
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, 'PNG', 25, 20, 68, 14);
+      const logoW = 66;
+      let logoH = (logoW * 260) / 2037; // Natural aspect ratio of logo1.png (2037x260) -> ~8.42 mm
+      try {
+        const imgProps = doc.getImageProperties(logoDataUrl);
+        if (imgProps && imgProps.width && imgProps.height) {
+          logoH = (logoW * imgProps.height) / imgProps.width;
+        }
+      } catch {
+        // Fallback to exact pixel ratio
+      }
+      doc.addImage(logoDataUrl, 'PNG', 25, 20, logoW, logoH);
     } catch (err) {
       console.warn('Gagal menempelkan gambar logo:', err);
     }
   }
 
-  // 2. Outer Border Frame
+  // 2. Outer Border Frame (F4 paper height = 330 mm)
   const boxX = 25;
-  const boxY = 38;
+  const boxY = 35;
   const boxW = 165;
-  const boxH = 195;
+  const boxH = 258; // Bottom border at 35 + 258 = 293 mm (37 mm bottom margin on F4 paper)
 
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.4);
@@ -146,10 +156,10 @@ export async function generateMemoPenolakanPdf(item: RejectionLogItem): Promise<
   doc.setFontSize(10.5);
 
   let curY = boxY + 18;
-  doc.text('Menunjuk permohonan kredit dengan data sebagai berikut :', boxX + 6, curY);
+  doc.text('Menunjuk permohonan kredit dengan data sebagai berikut :', boxX + 8, curY);
 
-  curY += 10;
-  const labelX = boxX + 6;
+  curY += 9;
+  const labelX = boxX + 8;
   const colonX = boxX + 46;
   const valX = boxX + 50;
   const lineGap = 6.5;
@@ -190,7 +200,7 @@ export async function generateMemoPenolakanPdf(item: RejectionLogItem): Promise<
   curY += lineGap;
   doc.text('Alamat', labelX, curY);
   doc.text(':', colonX, curY);
-  const splitAlamat = doc.splitTextToSize(alamatNasabah, boxW - 56);
+  const splitAlamat = doc.splitTextToSize(alamatNasabah, boxW - 58);
   doc.text(splitAlamat, valX, curY);
   curY += (splitAlamat.length - 1) * 5;
 
@@ -204,58 +214,64 @@ export async function generateMemoPenolakanPdf(item: RejectionLogItem): Promise<
   curY += 12;
   const splitKet1 = doc.splitTextToSize(
     'Dengan ini di sampaikan bahwa permohonan kredit tersebut tidak bisa di proses lebih lanjut dengan alasan sebagai berikut :',
-    boxW - 12
+    boxW - 16
   );
-  doc.text(splitKet1, boxX + 6, curY);
+  doc.text(splitKet1, boxX + 8, curY);
   curY += splitKet1.length * 5 + 4;
 
   // Rincian Alasan Ditolak (Text in Red color as per template)
   doc.setTextColor(215, 38, 38);
-  const splitAlasan = doc.splitTextToSize(item.alasan_ditolak, boxW - 12);
-  doc.text(splitAlasan, boxX + 6, curY);
+  const splitAlasan = doc.splitTextToSize(item.alasan_ditolak, boxW - 16);
+  doc.text(splitAlasan, boxX + 8, curY);
   curY += splitAlasan.length * 5 + 8;
 
   // Paragraf Penutup
   doc.setTextColor(0, 0, 0);
   const splitClosing = doc.splitTextToSize(
     'Demikian memo ini kami buat untuk dapat di tindak lanjuti, atas perhatian dan kerjasamanya kami ucapkan terima kasih.',
-    boxW - 12
+    boxW - 16
   );
-  doc.text(splitClosing, boxX + 6, curY);
+  doc.text(splitClosing, boxX + 8, curY);
 
-  // 4. Signatures Area (Bottom of the box)
-  const sigY = boxY + boxH - 45;
-  const col1X = boxX + 25;
-  const col2X = boxX + boxW / 2;
-  const col3X = boxX + boxW - 25;
+  // 4. Signatures Area (Safely inside bottom of the box with ample margin)
+  const bottomBox = boxY + boxH; // 293 mm
+  const titleY = bottomBox - 14;  // 279 mm (14 mm padding from bottom border)
+  const nameY = titleY - 6.5;     // 272.5 mm
+  const sigHeaderY = nameY - 26;  // 246.5 mm
 
-  doc.text('Mengetahui,', col1X, sigY, { align: 'center' });
-  doc.text('Menyetujui,', col2X, sigY, { align: 'center' });
-  doc.text(`Denpasar, ${tglDitolak}`, col3X, sigY, { align: 'center' });
+  // Column centers
+  const col1X = boxX + 32;        // 57 mm
+  const col2X = boxX + boxW / 2;  // 107.5 mm
+  const col3X = boxX + boxW - 32; // 158 mm
 
-  // Underlined Names
-  const nameY = sigY + 28;
+  doc.setFont(fontName, 'normal');
+  doc.setFontSize(10.5);
+  doc.setTextColor(0, 0, 0);
+
+  doc.text('Mengetahui,', col1X, sigHeaderY, { align: 'center' });
+  doc.text('Menyetujui,', col2X, sigHeaderY, { align: 'center' });
+  doc.text(`Denpasar, ${tglDitolak}`, col3X, sigHeaderY, { align: 'center' });
 
   // Left Signature: Pjs. Kabag Analis Kredit
   const nameKabag = 'Gede Cahya Aryadiputra, S.Pd.';
   doc.text(nameKabag, col1X, nameY, { align: 'center' });
   const w1 = doc.getTextWidth(nameKabag);
   doc.line(col1X - w1 / 2, nameY + 0.8, col1X + w1 / 2, nameY + 0.8);
-  doc.text('Pjs. Kabag Analis Kredit', col1X, nameY + 5, { align: 'center' });
+  doc.text('Pjs. Kabag Analis Kredit', col1X, titleY, { align: 'center' });
 
   // Center Signature: Kepala Cabang / Marketing
   const rawKepala = item.kepala_cabang && item.kepala_cabang !== '-' ? item.kepala_cabang : 'Yudhi Novianto,.S.E';
   doc.text(rawKepala, col2X, nameY, { align: 'center' });
   const w2 = doc.getTextWidth(rawKepala);
   doc.line(col2X - w2 / 2, nameY + 0.8, col2X + w2 / 2, nameY + 0.8);
-  doc.text('Marketing', col2X, nameY + 5, { align: 'center' });
+  doc.text('Marketing', col2X, titleY, { align: 'center' });
 
   // Right Signature: Analis Kredit
   const rawAnalis = item.analis && item.analis !== '-' ? item.analis : 'I Putu Dimas Adiputra';
   doc.text(rawAnalis, col3X, nameY, { align: 'center' });
   const w3 = doc.getTextWidth(rawAnalis);
   doc.line(col3X - w3 / 2, nameY + 0.8, col3X + w3 / 2, nameY + 0.8);
-  doc.text('Analis Kredit', col3X, nameY + 5, { align: 'center' });
+  doc.text('Analis Kredit', col3X, titleY, { align: 'center' });
 
   return doc.output('blob');
 }
