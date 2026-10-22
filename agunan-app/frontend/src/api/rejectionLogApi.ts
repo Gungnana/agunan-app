@@ -3,6 +3,7 @@ import {
   RejectionLogItem,
   RejectionStats,
   SEED_REJECTION_DATA,
+  ProfileSearchResponse,
 } from '../types/rejectionLog';
 
 const LOCAL_STORAGE_KEY = 'agunan_rejection_logs_v2';
@@ -185,5 +186,47 @@ export const rejectionLogApi = {
   resetToSeed: (): RejectionLogItem[] => {
     saveLocalData(SEED_REJECTION_DATA);
     return SEED_REJECTION_DATA;
+  },
+
+  searchProfile: async (params: {
+    nama: string;
+    alamat?: string;
+    category?: string;
+    q?: string;
+    limit?: number;
+  }): Promise<ProfileSearchResponse> => {
+    try {
+      const response = await apiClient.get<ProfileSearchResponse>('/rejection-log/profile-search', { params });
+      if (response.data && response.data.results !== undefined) {
+        return response.data;
+      }
+    } catch (err) {
+      console.warn('Backend profile search error, using client quick search links fallback:', err);
+    }
+
+    const namaClean = params.nama.trim();
+    const encodedName = encodeURIComponent(`"${namaClean}"`);
+    let queryText = params.q || `"${namaClean}" Bali`;
+    if (!params.q) {
+      if (params.category === 'news') queryText = `"${namaClean}" (Bali OR berita OR artikel)`;
+      else if (params.category === 'social') queryText = `"${namaClean}" (site:facebook.com OR site:instagram.com OR site:linkedin.com)`;
+      else if (params.category === 'negative') queryText = `"${namaClean}" (kasus OR penipuan OR sengketa OR pengadilan OR putusan)`;
+    }
+    const encodedQuery = encodeURIComponent(queryText);
+
+    return {
+      nama: namaClean,
+      query: queryText,
+      category: params.category || 'all',
+      total_results: 0,
+      results: [],
+      quick_links: [
+        { name: 'Google Web', url: `https://www.google.com/search?q=${encodedQuery}`, type: 'google', icon: 'Search' },
+        { name: 'Google Berita', url: `https://news.google.com/search?q=${encodedName}%20Bali`, type: 'news', icon: 'Newspaper' },
+        { name: 'Direktori Putusan MA RI', url: `https://putusan3.mahkamahagung.go.id/search.html?q=${encodedName}`, type: 'legal', icon: 'Scale' },
+        { name: 'LinkedIn Profil', url: `https://www.linkedin.com/search/results/all/?keywords=${encodedName}`, type: 'linkedin', icon: 'Linkedin' },
+        { name: 'Facebook', url: `https://www.facebook.com/search/top?q=${encodedName}`, type: 'facebook', icon: 'Facebook' },
+      ],
+    };
   },
 };

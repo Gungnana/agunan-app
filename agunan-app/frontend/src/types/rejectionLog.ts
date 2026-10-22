@@ -29,6 +29,31 @@ export interface RejectionStats {
   byKantor: Record<string, number>;
 }
 
+export interface ProfileSearchResultItem {
+  title: string;
+  url: string;
+  description: string;
+  source: string;
+  published_date?: string;
+  type: 'news' | 'social' | 'negative' | 'article' | 'web';
+}
+
+export interface QuickSearchLink {
+  name: string;
+  url: string;
+  type: string;
+  icon?: string;
+}
+
+export interface ProfileSearchResponse {
+  nama: string;
+  query: string;
+  category: string;
+  total_results: number;
+  results: ProfileSearchResultItem[];
+  quick_links: QuickSearchLink[];
+}
+
 export const SEED_REJECTION_DATA: RejectionLogItem[] = [
   {
     id: 'rej-1',

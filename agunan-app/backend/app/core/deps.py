@@ -7,6 +7,7 @@ from app.core.security import decode_access_token
 from app.models.user import User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 def get_current_user(
@@ -39,6 +40,22 @@ def get_current_user(
         )
 
     return user
+
+
+def get_current_user_optional(
+    db: Session = Depends(get_db),
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+) -> Optional[User]:
+    """Dependency untuk memverifikasi token JWT jika disediakan, atau None jika tidak."""
+    if not token:
+        return None
+    payload = decode_access_token(token)
+    if not payload:
+        return None
+    username = payload.get("sub")
+    if not username:
+        return None
+    return db.query(User).filter(User.username == username).first()
 
 
 def require_role(allowed_roles: List[UserRole]):

@@ -18,11 +18,13 @@ import {
   ShieldAlert,
   FileText,
   Printer,
+  Globe,
 } from 'lucide-react';
 import { RejectionLogItem } from '../types/rejectionLog';
 import { rejectionLogApi, computeRejectionStats } from '../api/rejectionLogApi';
 import { exportRejectionLogToExcel } from '../utils/exportRejectionExcel';
 import { downloadMemoPenolakanPdf } from '../utils/generateMemoPdf';
+import { CustomerProfileSearchModal } from '../components/CustomerProfileSearchModal';
 
 const formatRupiah = (val: number | null | undefined): string => {
   if (val === null || val === undefined || isNaN(val)) return 'Rp 0';
@@ -48,6 +50,7 @@ export const LogbookRejectionPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<RejectionLogItem | null>(null);
   const [detailItem, setDetailItem] = useState<RejectionLogItem | null>(null);
+  const [profileSearchItem, setProfileSearchItem] = useState<RejectionLogItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
 
@@ -62,6 +65,25 @@ export const LogbookRejectionPage: React.FC = () => {
       alert('Gagal membuat memo penolakan: ' + (err.message || 'Terjadi kesalahan sistem.'));
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleUpdateNegativeInfoFromSearch = async (targetItem: RejectionLogItem, newInfo: string) => {
+    try {
+      await rejectionLogApi.update(targetItem.id, { informasi_negatif: newInfo });
+      setItems((prev) =>
+        prev.map((i) => (i.id === targetItem.id ? { ...i, informasi_negatif: newInfo } : i))
+      );
+      if (detailItem && detailItem.id === targetItem.id) {
+        setDetailItem({ ...detailItem, informasi_negatif: newInfo });
+      }
+      if (profileSearchItem && profileSearchItem.id === targetItem.id) {
+        setProfileSearchItem({ ...profileSearchItem, informasi_negatif: newInfo });
+      }
+      showToast(`Informasi negatif nasabah ${targetItem.nama} berhasil diperbarui.`);
+    } catch (err) {
+      console.error('Gagal memperbarui info negatif:', err);
+      alert('Gagal memperbarui catatan informasi negatif.');
     }
   };
 
@@ -636,6 +658,13 @@ export const LogbookRejectionPage: React.FC = () => {
                             <FileText className="w-3.5 h-3.5 text-rose-500" />
                           </button>
                           <button
+                            onClick={() => setProfileSearchItem(item)}
+                            title="Cari Profil & Jejak Digital Internet (OSINT)"
+                            className="p-1 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded"
+                          >
+                            <Globe className="w-3.5 h-3.5 text-violet-500" />
+                          </button>
+                          <button
                             onClick={() => setDetailItem(item)}
                             title="Lihat Detail"
                             className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
@@ -1057,16 +1086,27 @@ export const LogbookRejectionPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-between border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => handleGenerateMemo(detailItem)}
-                  disabled={isGeneratingPdf}
-                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>{isGeneratingPdf ? 'Membuat Memo...' : 'Cetak Memo Penolakan (PDF F4)'}</span>
-                </button>
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateMemo(detailItem)}
+                    disabled={isGeneratingPdf}
+                    className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>{isGeneratingPdf ? 'Membuat Memo...' : 'Cetak Memo Penolakan (PDF F4)'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setProfileSearchItem(detailItem)}
+                    className="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-violet-600/20 transition-all"
+                  >
+                    <Globe className="w-4 h-4" />
+                    <span>Cari Profil & Jejak Digital Internet</span>
+                  </button>
+                </div>
 
                 <button
                   type="button"
@@ -1079,6 +1119,16 @@ export const LogbookRejectionPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Customer Profile & OSINT Internet Search Modal */}
+      {profileSearchItem && (
+        <CustomerProfileSearchModal
+          isOpen={!!profileSearchItem}
+          onClose={() => setProfileSearchItem(null)}
+          item={profileSearchItem}
+          onUpdateNegativeInfo={handleUpdateNegativeInfoFromSearch}
+        />
       )}
     </div>
   );
