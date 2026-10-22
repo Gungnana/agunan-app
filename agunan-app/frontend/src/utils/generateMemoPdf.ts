@@ -223,7 +223,26 @@ export async function generateMemoPenolakanPdf(item: RejectionLogItem): Promise<
   doc.setTextColor(215, 38, 38);
   const splitAlasan = doc.splitTextToSize(item.alasan_ditolak, boxW - 16);
   doc.text(splitAlasan, boxX + 8, curY);
-  curY += splitAlasan.length * 5 + 8;
+  curY += splitAlasan.length * 5 + 6;
+
+  // Informasi Negatif (Dibawah Alasan Ditolak)
+  const infoNegatif = item.informasi_negatif?.trim() || '-';
+  doc.setFont(fontName, 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(0, 0, 0);
+  doc.text('Informasi Negatif :', boxX + 8, curY);
+  curY += 5.5;
+
+  doc.setFont(fontName, 'normal');
+  doc.setFontSize(10);
+  if (infoNegatif !== '-') {
+    doc.setTextColor(215, 38, 38); // Red color for negative findings
+  } else {
+    doc.setTextColor(100, 100, 100);
+  }
+  const splitInfoNeg = doc.splitTextToSize(infoNegatif, boxW - 16);
+  doc.text(splitInfoNeg, boxX + 8, curY);
+  curY += splitInfoNeg.length * 5 + 8;
 
   // Paragraf Penutup
   doc.setTextColor(0, 0, 0);
