@@ -6,11 +6,6 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { LoginPage } from './pages/LoginPage';
 import { BaliMarketSearchPage } from './pages/BaliMarketSearchPage';
-import { PengajuanListPage } from './pages/PengajuanListPage';
-import { ValuasiAnalisaPage } from './pages/ValuasiAnalisaPage';
-import { ComparableDatabasePage } from './pages/ComparableDatabasePage';
-import { ParameterPage } from './pages/ParameterPage';
-import { AuditLogPage } from './pages/AuditLogPage';
 import { RekapRekeningPage } from './pages/RekapRekeningPage';
 import { LogbookRejectionPage } from './pages/LogbookRejectionPage';
 
@@ -67,46 +62,6 @@ export const App: React.FC = () => {
               element={
                 <ProtectedLayout>
                   <BaliMarketSearchPage />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/pengajuan"
-              element={
-                <ProtectedLayout>
-                  <PengajuanListPage />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/valuasi"
-              element={
-                <ProtectedLayout>
-                  <ValuasiAnalisaPage />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/pembanding"
-              element={
-                <ProtectedLayout>
-                  <ComparableDatabasePage />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/parameter"
-              element={
-                <ProtectedLayout>
-                  <ParameterPage />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/audit"
-              element={
-                <ProtectedLayout>
-                  <AuditLogPage />
                 </ProtectedLayout>
               }
             />

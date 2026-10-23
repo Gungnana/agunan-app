@@ -6,7 +6,6 @@ from app.core.security import verify_password, create_access_token, get_password
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.user import Token, UserResponse, UserCreate, UserLogin
-from app.services.audit import log_audit_event
 
 router = APIRouter()
 

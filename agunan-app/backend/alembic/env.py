@@ -12,13 +12,7 @@ from app.core.config import settings
 from app.core.database import Base
 from app.models import (
     User,
-    Pengajuan,
-    Agunan,
-    Pembanding,
-    ParameterValuasi,
-    Valuasi,
-    ValuasiPembanding,
-    AuditLog,
+    RejectionLog,
 )
 
 config = context.config
