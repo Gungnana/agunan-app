@@ -13,7 +13,6 @@ import { ParameterPage } from './pages/ParameterPage';
 import { AuditLogPage } from './pages/AuditLogPage';
 import { RekapRekeningPage } from './pages/RekapRekeningPage';
 import { LogbookRejectionPage } from './pages/LogbookRejectionPage';
-import { ValidasiBhumiPage } from './pages/ValidasiBhumiPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -116,14 +115,6 @@ export const App: React.FC = () => {
               element={
                 <ProtectedLayout>
                   <RekapRekeningPage />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/validasi-bhumi"
-              element={
-                <ProtectedLayout>
-                  <ValidasiBhumiPage />
                 </ProtectedLayout>
               }
             />
