@@ -50,16 +50,16 @@ export const LoginPage: React.FC = () => {
           <img
             src="/logo1.png"
             alt="PT. BPR BANK KERTIAWAN"
-            className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-sm"
+            className="h-8 sm:h-9 md:h-11 w-auto object-contain drop-shadow-sm"
           />
         </div>
 
         {/* Teks Judul Sistem di Kiri Bawah */}
-        <div className="z-10 mt-12 md:mt-0 space-y-1">
-          <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-slate-900 tracking-tight leading-tight">
+        <div className="z-10 mt-10 md:mt-0 space-y-0.5">
+          <h1 className="text-lg sm:text-xl md:text-[22px] font-semibold text-slate-800 tracking-tight leading-snug">
             Sistem Analis Kredit Terpadu
           </h1>
-          <p className="text-xl sm:text-2xl lg:text-[28px] font-bold text-slate-800 tracking-tight leading-tight">
+          <p className="text-base sm:text-lg md:text-[19px] font-medium text-slate-700 tracking-tight leading-snug">
             Internal (SAKTI) BPR Kertiawan
           </p>
         </div>
@@ -67,13 +67,13 @@ export const LoginPage: React.FC = () => {
 
       {/* Kolom Kanan: Form Login Putih Bersih */}
       <div className="w-full md:w-[44%] lg:w-[42%] bg-white flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 py-12 md:py-8 shadow-2xl md:shadow-none z-20">
-        <div className="w-full max-w-[390px] space-y-6">
+        <div className="w-full max-w-[370px] space-y-5">
           {/* Header Form */}
-          <div className="text-center space-y-1.5">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
+          <div className="text-center space-y-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
               Login
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            <p className="text-xs sm:text-[13px] text-slate-500 leading-relaxed">
               Selamat Datang Pada Sistem Codingan.Labs
               <br />
               Developer Group
