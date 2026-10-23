@@ -32,7 +32,9 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./db_analisa_agunan.db"
 
-    # pencarian web melalui Brave Search API.
+    # Pencarian web: Google Custom Search API & Brave Search API
+    GOOGLE_CSE_API_KEY: str = ""
+    GOOGLE_CSE_CX: str = ""
     BRAVE_SEARCH_API_KEY: str = "BSAdpcrAFpA-ae5TqkyP5rJIMcgxwni"
 
     # Default Initial Accounts

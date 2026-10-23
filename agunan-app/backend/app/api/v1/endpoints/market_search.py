@@ -602,6 +602,66 @@ out tags center;"""
     }
 
 
+async def _execute_web_search(
+    client: httpx.AsyncClient,
+    query: str,
+    count: int = 10,
+    search_headers: dict[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    """Execute search query using Google Custom Search JSON API first if configured, falling back to Brave Search API."""
+    # 1. Prioritaskan Google Custom Search JSON API jika API Key & CX diatur
+    if settings.GOOGLE_CSE_API_KEY and settings.GOOGLE_CSE_CX:
+        try:
+            google_res = await client.get(
+                "https://www.googleapis.com/customsearch/v1",
+                params={
+                    "key": settings.GOOGLE_CSE_API_KEY,
+                    "cx": settings.GOOGLE_CSE_CX,
+                    "q": query,
+                    "num": min(count, 10),
+                    "gl": "id",
+                    "lr": "lang_id",
+                },
+                headers={"Accept": "application/json"},
+            )
+            if google_res.status_code == 200:
+                data = google_res.json()
+                items = data.get("items", [])
+                formatted = []
+                for item in items:
+                    url = item.get("link", "")
+                    if not url:
+                        continue
+                    formatted.append({
+                        "title": item.get("title", ""),
+                        "url": url,
+                        "description": item.get("snippet", ""),
+                        "meta_url": {"hostname": item.get("displayLink", "")},
+                    })
+                return formatted
+        except Exception:
+            pass  # Fallback ke Brave jika Google gagal atau kuota harian habis
+
+    # 2. Gunakan Brave Search API jika tersedia
+    if settings.BRAVE_SEARCH_API_KEY:
+        brave_headers = search_headers or {
+            "X-Subscription-Token": settings.BRAVE_SEARCH_API_KEY,
+            "Accept": "application/json",
+        }
+        try:
+            res = await client.get(
+                "https://api.search.brave.com/res/v1/web/search",
+                params={"q": query, "count": count, "country": "ID", "result_filter": "web"},
+                headers=brave_headers,
+            )
+            if res.status_code == 200:
+                return res.json().get("web", {}).get("results", [])
+        except Exception:
+            pass
+
+    return []
+
+
 @router.get("")
 async def search_bali_land_market(
     lat: float = Query(..., ge=-90, le=90),
@@ -613,10 +673,10 @@ async def search_bali_land_market(
     """Search web references for land listings near a coordinate in Bali."""
     if not _inside_bali_bounds(lat, lon):
         raise HTTPException(status_code=400, detail="Koordinat harus berada di wilayah Bali.")
-    if not settings.BRAVE_SEARCH_API_KEY:
+    if not (settings.GOOGLE_CSE_API_KEY and settings.GOOGLE_CSE_CX) and not settings.BRAVE_SEARCH_API_KEY:
         raise HTTPException(
             status_code=503,
-            detail="Pencarian internet belum diaktifkan. Atur BRAVE_SEARCH_API_KEY pada konfigurasi backend.",
+            detail="Pencarian internet belum diaktifkan. Atur GOOGLE_CSE_API_KEY & GOOGLE_CSE_CX atau BRAVE_SEARCH_API_KEY pada konfigurasi backend.",
         )
 
     headers = {"User-Agent": f"{settings.APP_NAME}/{settings.APP_VERSION} (market reference search)"}
@@ -673,13 +733,12 @@ async def search_bali_land_market(
             general_seen_urls = set()
             locality_queries_used = []
             for query_entry in queries:
-                search_response = await client.get(
-                    "https://api.search.brave.com/res/v1/web/search",
-                    params={"q": query_entry["query"], "count": 10, "country": "ID", "result_filter": "web"},
-                    headers=search_headers,
+                query_results = await _execute_web_search(
+                    client,
+                    query_entry["query"],
+                    count=10,
+                    search_headers=search_headers,
                 )
-                search_response.raise_for_status()
-                query_results = search_response.json().get("web", {}).get("results", [])
                 locality_queries_used.append({
                     "level": query_entry["level"],
                     "area": query_entry["area"],
@@ -711,13 +770,12 @@ async def search_bali_land_market(
             detail_seen_urls = set()
             detail_queries_used = []
             for detail_query in detail_queries:
-                detail_response = await client.get(
-                    "https://api.search.brave.com/res/v1/web/search",
-                    params={"q": detail_query["query"], "count": 10, "country": "ID", "result_filter": "web"},
-                    headers=search_headers,
+                portal_results = await _execute_web_search(
+                    client,
+                    detail_query["query"],
+                    count=10,
+                    search_headers=search_headers,
                 )
-                detail_response.raise_for_status()
-                portal_results = detail_response.json().get("web", {}).get("results", [])
                 detail_queries_used.append({"portal": detail_query["portal"], "result_count": len(portal_results)})
                 for item in portal_results:
                     item_url = item.get("url")
@@ -727,8 +785,7 @@ async def search_bali_land_market(
                         item["matched_locality_area"] = street_search_area or area
                         detail_results.append(item)
 
-            # Brave can surface publicly indexed Marketplace pages and public group posts.
-            # This does not access private groups, login-only content, or scrape Facebook.
+            # Surfacing publicly indexed Marketplace pages and public group posts.
             facebook_results = []
             facebook_seen_urls = set()
             facebook_queries = (
@@ -740,13 +797,12 @@ async def search_bali_land_market(
             ]
             facebook_queries_used = []
             for facebook_query in facebook_queries:
-                facebook_response = await client.get(
-                    "https://api.search.brave.com/res/v1/web/search",
-                    params={"q": facebook_query, "count": 10, "country": "ID", "result_filter": "web"},
-                    headers=search_headers,
+                query_results = await _execute_web_search(
+                    client,
+                    facebook_query,
+                    count=10,
+                    search_headers=search_headers,
                 )
-                facebook_response.raise_for_status()
-                query_results = facebook_response.json().get("web", {}).get("results", [])
                 facebook_queries_used.append(facebook_query)
                 for item in query_results:
                     item_url = item.get("url")
