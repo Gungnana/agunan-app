@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Building2, Lock, User, AlertCircle, ShieldCheck } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, LogIn } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('analis1');
   const [password, setPassword] = useState('AnalisBank2026!');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,7 +23,6 @@ export const LoginPage: React.FC = () => {
       navigate('/');
     } catch (err: any) {
       console.error('Login error:', err);
-      // Jika respons error mengindikasikan kredensial salah, tampilkan pesan khusus
       if (err?.response?.status === 401) {
         setError('Username atau password yang Anda masukkan salah.');
       } else {
@@ -33,94 +33,127 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const setDemoAccount = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
+  const handleDemoFill = () => {
+    setUsername('analis1');
+    setPassword('AnalisBank2026!');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-slate-100">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-blue-400 items-center justify-center shadow-xl shadow-blue-500/25 mb-4">
-          <Building2 className="w-9 h-9 text-white" />
+    <div className="min-h-screen w-full flex flex-col md:flex-row font-['Poppins',sans-serif]">
+      {/* Kolom Kiri: Ilustrasi Geometris & Identitas Bank */}
+      <div
+        className="relative w-full md:w-[56%] lg:w-[58%] min-h-[280px] md:min-h-screen flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-cover bg-center bg-no-repeat select-none"
+        style={{ backgroundImage: "url('/login-bg.jpg')" }}
+      >
+        {/* Logo PT. BPR BANK KERTIAWAN di Kiri Atas */}
+        <div className="z-10">
+          <img
+            src="/logo1.png"
+            alt="PT. BPR BANK KERTIAWAN"
+            className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-sm"
+          />
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-          SISTEM ANALISA AGUNAN
-        </h2>
+
+        {/* Teks Judul Sistem di Kiri Bawah */}
+        <div className="z-10 mt-12 md:mt-0 space-y-1">
+          <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-slate-900 tracking-tight leading-tight">
+            Sistem Analis Kredit Terpadu
+          </h1>
+          <p className="text-xl sm:text-2xl lg:text-[28px] font-bold text-slate-800 tracking-tight leading-tight">
+            Internal (SAKTI) BPR Kertiawan
+          </p>
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-white/10 backdrop-blur-xl py-8 px-6 sm:px-8 shadow-2xl rounded-3xl border border-white/15 text-slate-800">
-          <form className="space-y-5" onSubmit={handleSubmit}>
+      {/* Kolom Kanan: Form Login Putih Bersih */}
+      <div className="w-full md:w-[44%] lg:w-[42%] bg-white flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 py-12 md:py-8 shadow-2xl md:shadow-none z-20">
+        <div className="w-full max-w-[390px] space-y-6">
+          {/* Header Form */}
+          <div className="text-center space-y-1.5">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
+              Login
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+              Selamat Datang Pada Sistem Codingan.Labs
+              <br />
+              Developer Group
+            </p>
+          </div>
+
+          {/* Form Input */}
+          <form className="space-y-4 pt-2" onSubmit={handleSubmit}>
             {error && (
-              <div className="p-3 bg-red-500/20 border border-red-400/30 text-red-200 text-xs rounded-xl flex items-center space-x-2">
+              <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg flex items-center space-x-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
+            {/* Input Username */}
             <div>
-              <label htmlFor="username" className="block text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                Username
-              </label>
-              <div className="mt-1.5 relative rounded-xl shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <User className="w-4 h-4" />
-                </div>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2.5 bg-white/90 text-slate-900 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 font-medium"
-                  placeholder="Masukkan username"
-                />
-              </div>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Masukkan Username"
+                className="w-full px-4 py-3 bg-white text-slate-800 placeholder-slate-400 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#5065F6] focus:border-[#5065F6] transition"
+              />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                Password
-              </label>
-              <div className="mt-1.5 relative rounded-xl shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2.5 bg-white/90 text-slate-900 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 font-medium"
-                  placeholder="Masukkan password"
-                />
-              </div>
+            {/* Input Password */}
+            <div className="relative flex items-center">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Masukkan Password"
+                className="w-full px-4 py-3 pr-12 bg-white text-slate-800 placeholder-slate-400 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#5065F6] focus:border-[#5065F6] transition"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Sembunyikan password' : 'Lihat password'}
+                className="absolute right-0 top-0 bottom-0 px-3.5 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border-l border-slate-300 rounded-r-md text-slate-400 hover:text-slate-600 transition"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg shadow-blue-600/30 transition-all card-hover disabled:opacity-50"
-            >
-              {isLoading ? 'Memverifikasi...' : 'Masuk ke Sistem Portal'}
-            </button>
+            {/* Tombol Masuk ->] */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 px-4 rounded-md text-sm font-bold text-white bg-[#5065F6] hover:bg-[#4357e8] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5065F6] shadow-sm transition flex items-center justify-center space-x-1.5 disabled:opacity-60 cursor-pointer"
+              >
+                <span>{isLoading ? 'Memproses...' : 'Masuk'}</span>
+                {!isLoading && (
+                  <span className="flex items-center text-white text-sm font-bold">
+                    <LogIn className="w-4 h-4 ml-1" />
+                  </span>
+                )}
+              </button>
+            </div>
           </form>
 
-          {/* Quick Demo Selector */}
-          <div className="mt-6 pt-5 border-t border-white/10 text-xs">
-            <div className="text-slate-300 font-semibold mb-2 text-center text-[11px] uppercase tracking-wider">
-              Login Cepat Demo:
-            </div>
+          {/* Quick Demo Helper */}
+          <div className="pt-4 text-center">
             <button
               type="button"
-              onClick={() => setDemoAccount('analis1', 'AnalisBank2026!')}
-              className="w-full py-2 px-3 bg-white/10 hover:bg-white/20 text-blue-200 rounded-lg text-center font-medium transition"
+              onClick={handleDemoFill}
+              className="text-xs text-slate-400 hover:text-[#5065F6] transition underline decoration-dotted"
             >
-              🏦 Analis Kredit — analis1
+              Isi otomatis akun demo (analis1)
             </button>
           </div>
         </div>
