@@ -15,6 +15,7 @@ from app.schemas.rejection_log import (
     RejectionLogResponse,
     RejectionStatsResponse,
 )
+from app.services.search_service import search_duckduckgo_async, classify_result_type
 
 router = APIRouter()
 
@@ -165,63 +166,7 @@ async def search_customer_profile(
     ]
 
     results = []
-    seen_urls = set()
-
-    # 1. Prioritaskan Google Custom Search JSON API jika API Key & CX telah diatur
-    if settings.GOOGLE_CSE_API_KEY and settings.GOOGLE_CSE_CX:
-        try:
-            timeout = httpx.Timeout(10.0, connect=4.0)
-            async with httpx.AsyncClient(timeout=timeout) as client:
-                res = await client.get(
-                    "https://www.googleapis.com/customsearch/v1",
-                    params={
-                        "key": settings.GOOGLE_CSE_API_KEY,
-                        "cx": settings.GOOGLE_CSE_CX,
-                        "q": search_query,
-                        "num": min(limit, 10),
-                        "gl": "id",
-                        "lr": "lang_id",
-                    },
-                    headers={"Accept": "application/json"},
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    for item in data.get("items", []):
-                        url = item.get("link", "")
-                        if url and url not in seen_urls:
-                            seen_urls.add(url)
-                            source = item.get("displayLink", "")
-                            res_type = "article"
-                            url_lower = url.lower()
-                            title_lower = (item.get("title") or "").lower()
-
-                            if any(soc in url_lower for soc in ["facebook.com", "instagram.com", "linkedin.com", "tiktok.com", "twitter.com", "x.com"]):
-                                res_type = "social"
-                            elif any(leg in url_lower or leg in title_lower for leg in ["mahkamahagung", "putusan", "polri", "kejaksaan", "kasus", "sidang", "tersangka", "sengketa", "penipuan"]):
-                                res_type = "negative"
-                            elif any(med in url_lower for med in ["detik.com", "kompas.com", "tribunnews.com", "jawapos.com", "balipost.com", "nusabali.com", "radarbali"]):
-                                res_type = "news"
-
-                            # Ekstrak tanggal bila tersedia di pagemap
-                            pagemap = item.get("pagemap", {})
-                            metatags = pagemap.get("metatags", [{}])[0] if pagemap.get("metatags") else {}
-                            pub_date = metatags.get("article:published_time") or metatags.get("date") or ""
-                            if pub_date and len(pub_date) > 10:
-                                pub_date = pub_date[:10]
-
-                            results.append({
-                                "title": item.get("title", ""),
-                                "url": url,
-                                "description": item.get("snippet", ""),
-                                "source": source or "Google Search",
-                                "published_date": pub_date,
-                                "type": res_type,
-                            })
-        except Exception:
-            pass
-
-    # 2. Jika Google CSE belum diisi atau kuota habis, fallback ke Brave Search API
-    if not results and settings.BRAVE_SEARCH_API_KEY:
+    if settings.BRAVE_SEARCH_API_KEY:
         try:
             headers = {
                 "X-Subscription-Token": settings.BRAVE_SEARCH_API_KEY,
@@ -239,6 +184,8 @@ async def search_customer_profile(
                     data = res.json()
                     web_results = data.get("web", {}).get("results", [])
                     news_results = data.get("news", {}).get("results", [])
+
+                    seen_urls = set()
 
                     for item in news_results:
                         url = item.get("url", "")
@@ -277,6 +224,28 @@ async def search_customer_profile(
                                 "published_date": item.get("age", ""),
                                 "type": res_type,
                             })
+        except Exception:
+            pass
+
+    # Automatic fallback to DuckDuckGo if Brave search is unavailable, quota expired, or yielded 0 results
+    if not results:
+        try:
+            ddg_items = await search_duckduckgo_async(search_query, max_results=limit)
+            seen_urls = set()
+            for item in ddg_items:
+                url = item.get("url", "")
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    title = item.get("title", "")
+                    res_type = classify_result_type(url, title)
+                    results.append({
+                        "title": title,
+                        "url": url,
+                        "description": item.get("description", ""),
+                        "source": item.get("source") or "DuckDuckGo",
+                        "published_date": "",
+                        "type": res_type,
+                    })
         except Exception:
             pass
 
