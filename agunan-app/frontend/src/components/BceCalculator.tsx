@@ -239,7 +239,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
   return (
     <div id="bce-section" className="space-y-6">
       {/* 3 Comparables Summary Table */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <h3 className="text-sm font-bold text-slate-900">
@@ -249,7 +249,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
               Dihitung dari rata-rata harga setelah diskon (DC) pembanding yang dipilih oleh analis.
             </p>
           </div>
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+          <span className="rounded-md bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
             {comparables.length} Pembanding
           </span>
         </div>
@@ -307,7 +307,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
         </div>
 
         {/* Input Luas Agunan Subjek & Rata-rata Pembanding */}
-        <div className="mt-5 grid gap-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4 sm:grid-cols-3">
+        <div className="mt-5 grid gap-4 rounded-md border border-blue-100 bg-blue-50/50 p-4 sm:grid-cols-3">
           <div>
             <label className="block text-xs font-bold text-blue-900">
               Luas Tanah Agunan yang Dinilai (m²)
@@ -356,7 +356,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
       </section>
 
       {/* SPREADSHEET KALKULATOR BCE (FORMAT PERSIS EXCEL) */}
-      <section className="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-300 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div>
             <h2 className="text-base font-black text-slate-900 sm:text-lg">
@@ -582,7 +582,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
       </section>
 
       {/* SPREADSHEET KESIMPULAN PENILAIAN NILAI PASAR & NILAI BCE (TANAH & BANGUNAN) */}
-      <section className="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-300 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-blue-700" />
@@ -600,7 +600,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
               type="button"
               onClick={handleExportExcel}
               disabled={isExportingExcel}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 shadow-xs hover:bg-emerald-100 hover:border-emerald-400 transition disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 shadow-xs hover:bg-emerald-100 hover:border-emerald-400 transition disabled:opacity-50"
               title="Download file Excel dengan rumus otomatis"
             >
               <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
@@ -610,7 +610,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
               type="button"
               onClick={handleExportPdf}
               disabled={isExportingPdf}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-800 shadow-xs hover:bg-rose-100 hover:border-rose-400 transition disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-md border border-rose-300 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-800 shadow-xs hover:bg-rose-100 hover:border-rose-400 transition disabled:opacity-50"
               title="Download Laporan Penilaian format PDF"
             >
               <FileText className="h-4 w-4 text-rose-700" />
@@ -619,7 +619,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
             <button
               type="button"
               onClick={handleAddBuilding}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Plus className="h-4 w-4" /> Tambah Keterangan Baru (Bangunan)
             </button>
@@ -833,7 +833,7 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
       </section>
 
       {/* TABEL KRITERIA LENGKAP (SEDERHANA & MENYATU) */}
-      <section className="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-300 bg-white p-6 shadow-sm">
         <h3 className="text-sm font-black uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-2">
           KRITERIA :
         </h3>

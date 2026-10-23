@@ -142,11 +142,11 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-4xl w-full my-6 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in duration-200">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-2xl max-w-4xl w-full my-6 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in duration-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-6 py-4 text-white flex items-center justify-between border-b border-indigo-900/50 flex-shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-600/30 text-violet-300 border border-violet-400/30 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-md bg-violet-600/30 text-violet-300 border border-violet-400/30 flex items-center justify-center flex-shrink-0">
               <Globe className="w-5 h-5" />
             </div>
             <div>
@@ -206,13 +206,13 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                 value={customQuery}
                 onChange={(e) => setCustomQuery(e.target.value)}
                 placeholder={`Ketik kata kunci tambahan, misal: "${item.nama}" penipuan OR kasus OR toko...`}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-md text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
               />
             </div>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 shadow-md shadow-violet-600/20 disabled:opacity-50"
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-md text-xs font-bold transition-all flex items-center space-x-1.5 shadow-md shadow-violet-600/20 disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -230,11 +230,11 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
 
           {/* Category Tabs */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+            <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-md text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => handleCategoryChange('all')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition-all flex items-center space-x-1.5 ${
                   activeCategory === 'all'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -247,7 +247,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => handleCategoryChange('news')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition-all flex items-center space-x-1.5 ${
                   activeCategory === 'news'
                     ? 'bg-white text-emerald-800 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -260,7 +260,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => handleCategoryChange('social')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition-all flex items-center space-x-1.5 ${
                   activeCategory === 'social'
                     ? 'bg-white text-sky-800 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -273,7 +273,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => handleCategoryChange('negative')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 ${
+                className={`px-3 py-1.5 rounded-md transition-all flex items-center space-x-1.5 ${
                   activeCategory === 'negative'
                     ? 'bg-white text-rose-800 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -306,7 +306,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
               </p>
             </div>
           ) : errorMessage ? (
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs text-center space-y-2">
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-md text-rose-800 text-xs text-center space-y-2">
               <AlertTriangle className="w-5 h-5 mx-auto text-rose-500" />
               <p className="font-semibold">{errorMessage}</p>
               <p>Anda tetap dapat menggunakan tombol pintasan pencarian langsung di bawah ini.</p>
@@ -316,7 +316,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
               {searchData.results.map((res, idx) => (
                 <div
                   key={idx}
-                  className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:border-violet-300 hover:shadow-md transition-all group"
+                  className="p-4 bg-white rounded-md border border-slate-200/80 shadow-sm hover:border-violet-300 hover:shadow-md transition-all group"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1.5 flex-1">
@@ -363,7 +363,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                         type="button"
                         onClick={() => handleCopyLink(res.url)}
                         title="Salin Tautan"
-                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
+                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-all"
                       >
                         {copiedUrl === res.url ? (
                           <Check className="w-4 h-4 text-emerald-600" />
@@ -377,7 +377,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                           type="button"
                           onClick={() => handleSaveToNegativeInfo(res)}
                           title="Simpan artikel ini ke Informasi Negatif nasabah"
-                          className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-semibold flex items-center space-x-1 transition-all"
+                          className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-md text-xs font-semibold flex items-center space-x-1 transition-all"
                         >
                           {savedNote === res.url ? (
                             <>
@@ -397,7 +397,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                         href={res.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center space-x-1 shadow-sm"
+                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-bold transition-all flex items-center space-x-1 shadow-sm"
                       >
                         <span>Buka</span>
                         <ExternalLink className="w-3 h-3" />
@@ -409,7 +409,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
             </div>
           ) : (
             <div className="py-12 text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-md bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
                 <Search className="w-6 h-6" />
               </div>
               <div className="space-y-1">
@@ -425,7 +425,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
           )}
 
           {/* Quick Direct Links Dock (Google, News, Putusan MA, Medsos) */}
-          <div className="mt-4 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+          <div className="mt-4 p-4 bg-white rounded-md border border-slate-200 shadow-sm space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
                 <ExternalLink className="w-3.5 h-3.5 text-violet-600" />
@@ -439,7 +439,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                 href={`https://www.google.com/search?q=${encodeURIComponent(`"${item.nama}" Bali`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 bg-slate-50 hover:bg-violet-50 hover:border-violet-300 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:text-violet-800 flex items-center justify-center space-x-1.5 transition-all text-center"
+                className="p-2.5 bg-slate-50 hover:bg-violet-50 hover:border-violet-300 border border-slate-200 rounded-md text-xs font-bold text-slate-700 hover:text-violet-800 flex items-center justify-center space-x-1.5 transition-all text-center"
               >
                 <Search className="w-3.5 h-3.5 text-blue-500" />
                 <span>Google Web</span>
@@ -449,7 +449,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                 href={`https://news.google.com/search?q=${encodeURIComponent(`"${item.nama}"`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:text-emerald-800 flex items-center justify-center space-x-1.5 transition-all text-center"
+                className="p-2.5 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 rounded-md text-xs font-bold text-slate-700 hover:text-emerald-800 flex items-center justify-center space-x-1.5 transition-all text-center"
               >
                 <Newspaper className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Google Berita</span>
@@ -459,7 +459,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                 href={`https://putusan3.mahkamahagung.go.id/search.html?q=${encodeURIComponent(item.nama)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 bg-slate-50 hover:bg-rose-50 hover:border-rose-300 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-800 flex items-center justify-center space-x-1.5 transition-all text-center"
+                className="p-2.5 bg-slate-50 hover:bg-rose-50 hover:border-rose-300 border border-slate-200 rounded-md text-xs font-bold text-slate-700 hover:text-rose-800 flex items-center justify-center space-x-1.5 transition-all text-center"
               >
                 <Scale className="w-3.5 h-3.5 text-rose-500" />
                 <span>Putusan MA RI</span>
@@ -469,7 +469,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                 href={`https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(item.nama)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 bg-slate-50 hover:bg-sky-50 hover:border-sky-300 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:text-sky-800 flex items-center justify-center space-x-1.5 transition-all text-center"
+                className="p-2.5 bg-slate-50 hover:bg-sky-50 hover:border-sky-300 border border-slate-200 rounded-md text-xs font-bold text-slate-700 hover:text-sky-800 flex items-center justify-center space-x-1.5 transition-all text-center"
               >
                 <Building2 className="w-3.5 h-3.5 text-sky-600" />
                 <span>LinkedIn</span>
@@ -479,7 +479,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
                 href={`https://www.facebook.com/search/top?q=${encodeURIComponent(item.nama)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:text-blue-800 flex items-center justify-center space-x-1.5 transition-all text-center"
+                className="p-2.5 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-md text-xs font-bold text-slate-700 hover:text-blue-800 flex items-center justify-center space-x-1.5 transition-all text-center"
               >
                 <Share2 className="w-3.5 h-3.5 text-blue-600" />
                 <span>Facebook</span>
@@ -498,7 +498,7 @@ export const CustomerProfileSearchModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all"
+            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-md transition-all"
           >
             Selesai / Tutup
           </button>

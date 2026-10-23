@@ -111,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Footer Bagian Bawah: Profil Pengguna & Tombol Keluar */}
       <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/80 shadow-sm">
+        <div className="flex items-center justify-between p-2 rounded-md bg-white border border-slate-200/80 shadow-sm">
           <div className="flex items-center space-x-2.5 min-w-0">
             <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
               {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'A'}
@@ -128,7 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <button
             onClick={logout}
             title="Keluar dari sistem"
-            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 ml-1"
+            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors flex-shrink-0 ml-1"
           >
             <LogOut className="w-4 h-4" />
           </button>

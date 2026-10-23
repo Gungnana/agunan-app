@@ -307,14 +307,14 @@ export const LogbookRejectionPage: React.FC = () => {
     <div className="max-w-full mx-auto space-y-6 pb-20">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs sm:text-sm animate-bounce">
+        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-md shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs sm:text-sm animate-bounce">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* Header Banner - Sesuai File Penolakan BPR Bank Kertiawan */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-lg p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 -mt-10 -mr-10 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
@@ -327,7 +327,7 @@ export const LogbookRejectionPage: React.FC = () => {
             <button
               onClick={handleExportExcel}
               disabled={isExporting || items.length === 0}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-emerald-700/20 transition-all flex items-center space-x-2 disabled:opacity-50"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs sm:text-sm font-bold shadow-lg shadow-emerald-700/20 transition-all flex items-center space-x-2 disabled:opacity-50"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>{isExporting ? 'Mengekspor...' : 'Export Excel (.xlsx)'}</span>
@@ -335,7 +335,7 @@ export const LogbookRejectionPage: React.FC = () => {
 
             <button
               onClick={handleOpenAdd}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-600/30 transition-all flex items-center space-x-2"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-xs sm:text-sm font-bold shadow-lg shadow-blue-600/30 transition-all flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span>Input Nasabah Ditolak</span>
@@ -346,10 +346,10 @@ export const LogbookRejectionPage: React.FC = () => {
 
       {/* KPI Metric Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-md p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Total Permohonan</span>
-            <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center">
               <UserX className="w-5 h-5" />
             </div>
           </div>
@@ -361,10 +361,10 @@ export const LogbookRejectionPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-md p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Total Plafon Ditolak</span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center">
               <span className="font-bold text-sm">Rp</span>
             </div>
           </div>
@@ -376,10 +376,10 @@ export const LogbookRejectionPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-md p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Status Kapasitas</span>
-            <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center">
               <ShieldAlert className="w-5 h-5" />
             </div>
           </div>
@@ -393,10 +393,10 @@ export const LogbookRejectionPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-md p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Unit / Kantor</span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
               <Building2 className="w-5 h-5" />
             </div>
           </div>
@@ -410,7 +410,7 @@ export const LogbookRejectionPage: React.FC = () => {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3">
+      <div className="bg-white rounded-md p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3">
         <div className="flex flex-col md:flex-row gap-3">
           {/* Search Box */}
           <div className="relative flex-1">
@@ -420,7 +420,7 @@ export const LogbookRejectionPage: React.FC = () => {
               placeholder="Cari nama, NIK/NPWP, No Permohonan, alamat, peruntukan, alasan ditolak..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800"
+              className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800"
             />
             {searchTerm && (
               <button
@@ -437,7 +437,7 @@ export const LogbookRejectionPage: React.FC = () => {
             <select
               value={selectedJenisKredit}
               onChange={(e) => setSelectedJenisKredit(e.target.value)}
-              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium"
+              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium"
             >
               <option value="ALL">Semua Jenis Kredit</option>
               {jenisKreditOptions.map((jk) => (
@@ -453,7 +453,7 @@ export const LogbookRejectionPage: React.FC = () => {
             <select
               value={selectedKapasitas}
               onChange={(e) => setSelectedKapasitas(e.target.value)}
-              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium"
+              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium"
             >
               <option value="ALL">Semua Status Kapasitas</option>
               {kapasitasOptions.map((k) => (
@@ -469,7 +469,7 @@ export const LogbookRejectionPage: React.FC = () => {
             <select
               value={selectedKantor}
               onChange={(e) => setSelectedKantor(e.target.value)}
-              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium"
+              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium"
             >
               <option value="ALL">Semua Kantor</option>
               {kantorOptions.map((kt) => (
@@ -505,7 +505,7 @@ export const LogbookRejectionPage: React.FC = () => {
       </div>
 
       {/* Main Table Card - Matching Exactly BPR Bank Kertiawan Columns */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-16 text-center space-y-3">
             <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -513,7 +513,7 @@ export const LogbookRejectionPage: React.FC = () => {
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="p-16 text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 rounded-md bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
               <UserX className="w-8 h-8" />
             </div>
             <h4 className="text-base font-bold text-slate-800">Tidak ada data penolakan yang sesuai</h4>
@@ -718,11 +718,11 @@ export const LogbookRejectionPage: React.FC = () => {
       {/* Modal Form: Input / Edit Data Nasabah Ditolak */}
       {isFormOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-4xl w-full my-8 overflow-hidden animate-in fade-in duration-200">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-2xl max-w-4xl w-full my-8 overflow-hidden animate-in fade-in duration-200">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 px-6 py-5 text-white flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-400/30 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-md bg-rose-500/20 text-rose-300 border border-rose-400/30 flex items-center justify-center">
                   <UserX className="w-5 h-5" />
                 </div>
                 <div>
@@ -753,7 +753,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: 5171026001750002"
                     value={formData.nik_npwp}
                     onChange={(e) => setFormData({ ...formData, nik_npwp: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl font-mono text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md font-mono text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
 
@@ -764,7 +764,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: 111 / 102"
                     value={formData.no_permohonan}
                     onChange={(e) => setFormData({ ...formData, no_permohonan: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl font-mono text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md font-mono text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
 
@@ -778,7 +778,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: NI KETUT SEKARINI"
                     value={formData.nama}
                     onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -792,7 +792,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: Desa Peguyangan Kangin..."
                     value={formData.alamat}
                     onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
 
@@ -803,7 +803,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: 23/2/2026"
                     value={formData.tanggal_pengajuan}
                     onChange={(e) => setFormData({ ...formData, tanggal_pengajuan: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
 
@@ -820,7 +820,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, plafon_pengajuan: parseFloat(e.target.value) || 0 })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl font-mono text-slate-800 font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md font-mono text-slate-800 font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                   <div className="text-[11px] text-blue-600 mt-0.5 font-semibold">
                     {formatRupiah(formData.plafon_pengajuan)}
@@ -837,7 +837,7 @@ export const LogbookRejectionPage: React.FC = () => {
                   <select
                     value={formData.jenis_kredit}
                     onChange={(e) => setFormData({ ...formData, jenis_kredit: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
                     <option value="MODAL KERJA">MODAL KERJA</option>
                     <option value="INVESTASI">INVESTASI</option>
@@ -855,7 +855,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: REFINANCING KREDIT / PEMBIAYAAN PROJECT / TAMBAHAN MODAL"
                     value={formData.peruntukan_kredit}
                     onChange={(e) => setFormData({ ...formData, peruntukan_kredit: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -872,7 +872,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: Kapasitas lemah, pendapatan tidak tercermin dan jaminan tidak mengcover rasio..."
                     value={formData.alasan_ditolak}
                     onChange={(e) => setFormData({ ...formData, alasan_ditolak: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-rose-500 focus:outline-none"
                   ></textarea>
                 </div>
 
@@ -884,7 +884,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     <select
                       value={formData.kapasitas}
                       onChange={(e) => setFormData({ ...formData, kapasitas: e.target.value })}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     >
                       <option value="TOLAK">TOLAK</option>
                       <option value="DITERIMA">DITERIMA</option>
@@ -900,7 +900,7 @@ export const LogbookRejectionPage: React.FC = () => {
                       placeholder="Contoh: SHM / SHM & BPKB"
                       value={formData.jaminan}
                       onChange={(e) => setFormData({ ...formData, jaminan: e.target.value })}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -914,7 +914,7 @@ export const LogbookRejectionPage: React.FC = () => {
                   placeholder="Contoh: Pernah memiliki masalah dengan warga lingkungan perumahan / 1 SHM & Mobil Splash / -"
                   value={formData.informasi_negatif}
                   onChange={(e) => setFormData({ ...formData, informasi_negatif: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -927,7 +927,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: Kuta / KPO"
                     value={formData.kantor}
                     onChange={(e) => setFormData({ ...formData, kantor: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
 
@@ -938,7 +938,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: Yudhi Novianto,.S.E"
                     value={formData.kepala_cabang}
                     onChange={(e) => setFormData({ ...formData, kepala_cabang: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
 
@@ -949,7 +949,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: I Putu Dimas Adiputra"
                     value={formData.analis}
                     onChange={(e) => setFormData({ ...formData, analis: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
 
@@ -960,7 +960,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     placeholder="Contoh: 23/3/2026"
                     value={formData.tanggal_ditolak}
                     onChange={(e) => setFormData({ ...formData, tanggal_ditolak: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -970,13 +970,13 @@ export const LogbookRejectionPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition-all text-xs sm:text-sm"
+                  className="px-5 py-2.5 rounded-md border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition-all text-xs sm:text-sm"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/30 transition-all text-xs sm:text-sm flex items-center space-x-2"
+                  className="px-6 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/30 transition-all text-xs sm:text-sm flex items-center space-x-2"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{editingItem ? 'Simpan Perubahan' : 'Simpan Data Penolakan'}</span>
@@ -990,7 +990,7 @@ export const LogbookRejectionPage: React.FC = () => {
       {/* Modal Detail Dossier */}
       {detailItem && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full my-8 overflow-hidden animate-in fade-in duration-200">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-2xl max-w-2xl w-full my-8 overflow-hidden animate-in fade-in duration-200">
             {/* Header */}
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 px-6 py-5 text-white flex items-center justify-between">
               <div>
@@ -1009,7 +1009,7 @@ export const LogbookRejectionPage: React.FC = () => {
 
             {/* Content */}
             <div className="p-6 space-y-4 text-xs sm:text-sm">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-md border border-slate-200 text-xs">
                 <div>
                   <span className="text-slate-400">NIK / NPWP:</span>
                   <div className="font-mono font-bold text-slate-800 mt-0.5">{detailItem.nik_npwp || '-'}</div>
@@ -1049,7 +1049,7 @@ export const LogbookRejectionPage: React.FC = () => {
               </div>
 
               {detailItem.alamat && (
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                <div className="p-3 bg-slate-50 rounded-md border border-slate-100 text-xs">
                   <span className="text-slate-400 font-medium">Alamat:</span>
                   <div className="text-slate-800 mt-0.5">{detailItem.alamat}</div>
                 </div>
@@ -1059,7 +1059,7 @@ export const LogbookRejectionPage: React.FC = () => {
                 <span className="font-bold text-slate-700 uppercase tracking-wide text-xs">
                   Alasan Detail Ditolak:
                 </span>
-                <div className="p-4 bg-rose-50/70 rounded-2xl border border-rose-200 text-slate-900 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                <div className="p-4 bg-rose-50/70 rounded-md border border-rose-200 text-slate-900 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-medium">
                   {detailItem.alasan_ditolak}
                 </div>
               </div>
@@ -1069,7 +1069,7 @@ export const LogbookRejectionPage: React.FC = () => {
                   <span className="font-bold text-slate-700 uppercase tracking-wide text-xs">
                     Informasi Negatif:
                   </span>
-                  <div className="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 text-amber-900 text-xs leading-relaxed">
+                  <div className="p-3.5 bg-amber-50/70 rounded-md border border-amber-200 text-amber-900 text-xs leading-relaxed">
                     {detailItem.informasi_negatif}
                   </div>
                 </div>
@@ -1092,7 +1092,7 @@ export const LogbookRejectionPage: React.FC = () => {
                     type="button"
                     onClick={() => handleGenerateMemo(detailItem)}
                     disabled={isGeneratingPdf}
-                    className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50"
+                    className="px-4 py-2.5 rounded-md bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-rose-600/20 transition-all disabled:opacity-50"
                   >
                     <FileText className="w-4 h-4" />
                     <span>{isGeneratingPdf ? 'Membuat Memo...' : 'Cetak Memo Penolakan (PDF F4)'}</span>
@@ -1101,7 +1101,7 @@ export const LogbookRejectionPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setProfileSearchItem(detailItem)}
-                    className="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-violet-600/20 transition-all"
+                    className="px-4 py-2.5 rounded-md bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-violet-600/20 transition-all"
                   >
                     <Globe className="w-4 h-4" />
                     <span>Cari Profil & Jejak Digital Internet</span>
@@ -1111,7 +1111,7 @@ export const LogbookRejectionPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setDetailItem(null)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-all"
+                  className="px-5 py-2.5 rounded-md bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-all"
                 >
                   Tutup
                 </button>

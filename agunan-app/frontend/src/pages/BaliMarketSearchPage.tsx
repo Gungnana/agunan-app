@@ -196,7 +196,7 @@ export const BaliMarketSearchPage: React.FC = () => {
       </header>
 
       <form onSubmit={handleSearch} className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <MapPin className="h-4 w-4 text-blue-600" />
             <h2 className="text-sm font-bold text-slate-900">Titik lokasi agunan</h2>
@@ -214,13 +214,13 @@ export const BaliMarketSearchPage: React.FC = () => {
                 }
               }}
               aria-describedby="coordinate-format"
-              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm text-slate-900"
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2.5 font-mono text-sm text-slate-900"
             />
             <span id="coordinate-format" className="mt-1 block text-[11px] font-normal text-slate-400">Contoh: -8.650000, 115.216700</span>
           </label>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold text-slate-600">Tipe tanah
-              <select value={landType} onChange={(e) => setLandType(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900">
+              <select value={landType} onChange={(e) => setLandType(e.target.value)} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900">
                 <option value="tanah_kosong">Tanah kosong</option>
                 <option value="kavling_perumahan">Kavling perumahan</option>
                 <option value="pertanian_perkebunan">Pertanian / perkebunan</option>
@@ -230,7 +230,7 @@ export const BaliMarketSearchPage: React.FC = () => {
               </select>
             </label>
             <label className="text-xs font-semibold text-slate-600">Bentuk tanah
-              <select value={landShape} onChange={(e) => setLandShape(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900">
+              <select value={landShape} onChange={(e) => setLandShape(e.target.value)} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900">
                 <option value="persegi">Persegi</option>
                 <option value="persegi_panjang">Persegi panjang</option>
                 <option value="tidak_beraturan">Tidak beraturan</option>
@@ -249,7 +249,7 @@ export const BaliMarketSearchPage: React.FC = () => {
                 step="1"
                 value={collateralAreaM2}
                 onChange={(e) => setCollateralAreaM2(Math.max(1, Number(e.target.value)))}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900"
+                className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-sm text-slate-900"
                 placeholder="Contoh: 200"
               />
               <span className="text-xs font-bold text-slate-500">m²</span>
@@ -258,13 +258,13 @@ export const BaliMarketSearchPage: React.FC = () => {
               Setara {(collateralAreaM2 / 100).toFixed(2)} are — digunakan untuk perhitungan estimasi total nilai agunan dan BCE
             </span>
           </label>
-          <button type="submit" disabled={isSearching} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
+          <button type="submit" disabled={isSearching} className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">
             <Search className="h-4 w-4" /> {isSearching ? 'Mencari referensi…' : 'Cari harga tanah sekitar'}
           </button>
           <p className="text-[11px] leading-relaxed text-slate-400">Tipe dan bentuk tanah digunakan sebagai kata kunci tambahan pencarian. Karena banyak iklan tidak mencantumkan bentuk bidang, pencarian dapat diperluas otomatis agar referensi tetap ditemukan.</p>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-5 py-3 text-xs font-semibold text-slate-600">Pilih lokasi di peta Bali</div>
           <MapContainer center={[lat, lon]} zoom={9} minZoom={8} maxBounds={baliBounds} maxBoundsViscosity={1} style={{ height: 330, width: '100%' }} scrollWheelZoom>
             <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -275,7 +275,7 @@ export const BaliMarketSearchPage: React.FC = () => {
         </section>
       </form>
 
-      {error && <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><p>{error}</p></div>}
+      {error && <div role="alert" className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><p>{error}</p></div>}
 
       {result && (
         <section className="space-y-4">
@@ -292,13 +292,13 @@ export const BaliMarketSearchPage: React.FC = () => {
           {result.references.length ? <>
             <div className="grid gap-3 md:grid-cols-2">
               {result.references.slice(0, showAllReferences ? result.references.length : 4).map((reference, index) => (
-                <article key={`${reference.url}-${index}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <article key={`${reference.url}-${index}`} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-blue-700">{reference.source}{reference.url.toLowerCase().includes('facebook.com') ? ' • hasil publik Facebook' : ''}{reference.reference_kind === 'individual_listing' ? ' • halaman detail properti' : ' • halaman pencarian umum'}</div>
                   <h3 className="font-bold leading-snug text-slate-900">{reference.title}</h3>
-                  <span className="mt-2 inline-flex rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">Ditemukan lewat kueri {reference.matched_locality_level}: {reference.matched_locality_area}</span>
-                  {reference.price_mentions.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{reference.price_mentions.slice(0, 3).map((price, priceIndex) => <span key={`${price}-${priceIndex}`} className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">{price.trim()}</span>)}</div>}
+                  <span className="mt-2 inline-flex rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">Ditemukan lewat kueri {reference.matched_locality_level}: {reference.matched_locality_area}</span>
+                  {reference.price_mentions.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{reference.price_mentions.slice(0, 3).map((price, priceIndex) => <span key={`${price}-${priceIndex}`} className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">{price.trim()}</span>)}</div>}
                   <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-slate-600">{reference.description || 'Buka halaman sumber untuk melihat rincian penawaran.'}</p>
-                  {(reference.comparison_data.property_type || reference.comparison_data.address || reference.comparison_data.width_m || reference.comparison_data.dimensions_m || reference.comparison_data.facing || reference.comparison_data.road_access || reference.comparison_data.zoning || reference.comparison_data.listing_description || reference.comparison_data.nearby.length > 0) && <details className="mt-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3">
+                  {(reference.comparison_data.property_type || reference.comparison_data.address || reference.comparison_data.width_m || reference.comparison_data.dimensions_m || reference.comparison_data.facing || reference.comparison_data.road_access || reference.comparison_data.zoning || reference.comparison_data.listing_description || reference.comparison_data.nearby.length > 0) && <details className="mt-3 rounded-md border border-blue-100 bg-blue-50/50 p-3">
                     <summary className="cursor-pointer text-xs font-bold text-blue-900">Rincian tambahan dari halaman referensi</summary>
                     <dl className="mt-2 grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
                       {reference.comparison_data.property_type && <div><dt className="font-semibold text-slate-500">Jenis properti</dt><dd className="mt-0.5 text-slate-800">{reference.comparison_data.property_type}</dd></div>}
@@ -313,7 +313,7 @@ export const BaliMarketSearchPage: React.FC = () => {
                     </dl>
                     <p className="mt-2 text-[10px] text-slate-400">{reference.comparison_data.page_enriched ? 'Dibaca dari halaman detail properti.' : 'Informasi tambahan terbatas pada metadata yang terindeks mesin pencari.'}</p>
                   </details>}
-                  <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="mt-3 grid grid-cols-3 gap-2 rounded-md border border-slate-100 bg-slate-50 p-3">
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Luas</p>
                       <p className="mt-1 text-xs font-bold text-slate-800">{reference.area_m2 !== null ? `${reference.area_m2.toLocaleString('id-ID')} m²` : 'Tidak tercantum'}</p>
@@ -333,7 +333,7 @@ export const BaliMarketSearchPage: React.FC = () => {
                     type="button"
                     disabled={!selectedReferenceUrls.includes(reference.url) && selectedReferenceUrls.length >= 3}
                     onClick={() => toggleReference(reference.url)}
-                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold transition ${selectedReferenceUrls.includes(reference.url) ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-700'} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400`}
+                    className={`mt-3 flex w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-bold transition ${selectedReferenceUrls.includes(reference.url) ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-700'} disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400`}
                     title={!selectedReferenceUrls.includes(reference.url) && selectedReferenceUrls.length >= 3 ? 'Maksimal pilih 3 referensi' : undefined}
                   >
                     {selectedReferenceUrls.includes(reference.url) ? '✓ Referensi dipilih' : 'Pilih untuk penilaian jarak'}
@@ -341,32 +341,32 @@ export const BaliMarketSearchPage: React.FC = () => {
                 </article>
               ))}
             </div>
-            {result.references.length > 4 && <button type="button" onClick={() => setShowAllReferences((shown) => !shown)} className="mx-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-700">
+            {result.references.length > 4 && <button type="button" onClick={() => setShowAllReferences((shown) => !shown)} className="mx-auto flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-700">
               {showAllReferences ? <><ChevronUp className="h-4 w-4" /> Tampilkan lebih sedikit</> : <><ChevronDown className="h-4 w-4" /> Tampilkan semua {result.references.length} referensi</>}
             </button>}
-          </> : <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">Belum ada referensi yang ditemukan untuk area ini.</div>}
-          <section aria-labelledby="distance-review-heading" className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm">
+          </> : <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">Belum ada referensi yang ditemukan untuk area ini.</div>}
+          <section aria-labelledby="distance-review-heading" className="rounded-lg border border-violet-200 bg-violet-50/70 p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 id="distance-review-heading" className="text-sm font-bold text-slate-900">Data Pembanding Lapangan</h3>
                 <p className="mt-1 text-xs text-slate-600">Pilih hingga 3 referensi. Data yang terbaca dari listing diisi otomatis; kolom kosong dapat dilengkapi manual. JDOP menentukan Discount %, Harga Setelah DC, dan Harga/Meter.</p>
               </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-violet-800">{selectedReferenceUrls.length}/3 dipilih</span>
+              <span className="rounded-md bg-white px-3 py-1 text-xs font-bold text-violet-800">{selectedReferenceUrls.length}/3 dipilih</span>
             </div>
             <div className="mt-4 space-y-3">
               {evaluatedReferences.map(({ reference, draft, factor, basePricePerAre, effectiveOfferPrice, discountedOfferPrice, discountedPricePerM2 }, index) => {
                 if (!draft) return null;
-                const fieldClass = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-800 placeholder:text-slate-400';
+                const fieldClass = 'mt-1 w-full rounded-md border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-800 placeholder:text-slate-400';
                 const labelClass = 'block text-[11px] font-semibold text-slate-600';
                 return (
-                  <article key={reference.url} className="rounded-xl border border-violet-100 bg-white p-4">
+                  <article key={reference.url} className="rounded-md border border-violet-100 bg-white p-4">
                     <div className="mb-3 flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 pb-3">
                       <div className="min-w-0">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-violet-700">Data Pembanding Lapangan {index + 1}</p>
                         <p className="truncate text-sm font-bold text-slate-900">{reference.title}</p>
                         <a href={reference.url} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-blue-700 hover:underline">Buka referensi sumber</a>
                       </div>
-                      <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-bold text-violet-800">{factor === null ? 'Isi JDOP' : `Discount ${Math.round(factor * 100)}%`}</span>
+                      <span className="rounded-md bg-violet-50 px-2.5 py-1 text-[11px] font-bold text-violet-800">{factor === null ? 'Isi JDOP' : `Discount ${Math.round(factor * 100)}%`}</span>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       <label className={labelClass}>Jenis
@@ -390,11 +390,11 @@ export const BaliMarketSearchPage: React.FC = () => {
                       <label className={labelClass}>Harga per are (opsional, input manual)
                         <input type="number" min={0} step="1000" value={draft.pricePerAre} onChange={(event) => updateComparisonDraft(reference.url, 'pricePerAre', event.target.value)} placeholder={basePricePerAre === null ? 'Tidak tersedia' : formatRupiah(basePricePerAre)} className={fieldClass} />
                       </label>
-                      <div className="rounded-lg bg-blue-50 p-2.5">
+                      <div className="rounded-md bg-blue-50 p-2.5">
                         <p className={labelClass}>Harga Setelah DC</p>
                         <p className="mt-2 text-sm font-black text-blue-800">{discountedOfferPrice === null ? '—' : formatRupiah(discountedOfferPrice)}</p>
                       </div>
-                      <div className="rounded-lg bg-emerald-50 p-2.5">
+                      <div className="rounded-md bg-emerald-50 p-2.5">
                         <p className={labelClass}>Harga / Meter setelah DC</p>
                         <p className="mt-2 text-sm font-black text-emerald-800">{discountedPricePerM2 === null ? '—' : formatRupiah(discountedPricePerM2)}</p>
                       </div>
@@ -406,10 +406,10 @@ export const BaliMarketSearchPage: React.FC = () => {
                   </article>
                 );
               })}
-              {selectedReferences.length === 0 && <p className="rounded-xl border border-dashed border-violet-200 bg-white/70 p-4 text-center text-xs text-slate-500">Pilih hingga 3 referensi dari seluruh daftar di atas. Data listing akan diisi otomatis jika tersedia dan kolom kosong dapat dilengkapi manual.</p>}
+              {selectedReferences.length === 0 && <p className="rounded-md border border-dashed border-violet-200 bg-white/70 p-4 text-center text-xs text-slate-500">Pilih hingga 3 referensi dari seluruh daftar di atas. Data listing akan diisi otomatis jika tersedia dan kolom kosong dapat dilengkapi manual.</p>}
             </div>
             {allDistancesValid && adjustedAveragePerAre !== null ? (
-              <div className="mt-4 rounded-xl border border-violet-200 bg-white p-4">
+              <div className="mt-4 rounded-md border border-violet-200 bg-white p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-violet-800">Indikasi rata-rata setelah faktor jarak dari {pricedEvaluations.length} referensi yang memiliki harga</p>
@@ -418,7 +418,7 @@ export const BaliMarketSearchPage: React.FC = () => {
                   </div>
                   <a
                     href="#bce-section"
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-600/20 transition hover:from-emerald-700 hover:to-teal-700"
+                    className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-600/20 transition hover:from-emerald-700 hover:to-teal-700"
                   >
                     <Calculator className="h-4 w-4" /> Buka Perhitungan BCE Agunan ↓
                   </a>
@@ -430,7 +430,7 @@ export const BaliMarketSearchPage: React.FC = () => {
             ) : selectedReferences.length > 0 ? (
               <p className="mt-3 text-xs text-amber-800">Lengkapi jarak ketiga referensi (maksimal 1.000 meter) untuk menghitung indikasi rata-rata setelah faktor jarak.</p>
             ) : null}
-            <details className="mt-4 rounded-xl border border-violet-100 bg-white/80 p-3">
+            <details className="mt-4 rounded-md border border-violet-100 bg-white/80 p-3">
               <summary className="cursor-pointer text-xs font-bold text-slate-700">Lihat acuan faktor jarak</summary>
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600 sm:grid-cols-3">
                 <span>≤50 m: 95%</span><span>51–100 m: 90%</span><span>101–150 m: 85%</span><span>151–200 m: 80%</span><span>201–300 m: 75%</span><span>&gt;300 m–1 km: 70%</span>
@@ -462,40 +462,40 @@ export const BaliMarketSearchPage: React.FC = () => {
             collateralLocationName={result.location.display_name}
             collateralCoordinates={{ lat, lon }}
           />
-          <section aria-labelledby="area-context-heading" className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
+          <section aria-labelledby="area-context-heading" className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-amber-700" />
                 <h3 id="area-context-heading" className="text-sm font-bold text-slate-900">Kondisi area sekitar titik</h3>
               </div>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">Radius {result.area_context.radius_m} m</span>
+              <span className="rounded-md bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">Radius {result.area_context.radius_m} m</span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-slate-700">{result.area_context.summary}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-white bg-white/90 p-3">
+              <div className="rounded-md border border-white bg-white/90 p-3">
                 <p className="text-xs font-semibold text-slate-500">Bangunan terpetakan</p>
                 <p className="mt-1 text-lg font-black text-slate-900">{result.area_context.building_count === null ? 'Tidak tersedia' : result.area_context.building_count.toLocaleString('id-ID')}</p>
               </div>
-              {result.area_context.observed_categories.length > 0 && <div className="rounded-xl border border-white bg-white/90 p-3">
+              {result.area_context.observed_categories.length > 0 && <div className="rounded-md border border-white bg-white/90 p-3">
                 <p className="text-xs font-semibold text-slate-500">Objek penggunaan lahan</p>
                 <ul className="mt-1 space-y-1">{result.area_context.observed_categories.map((item) => <li key={item.category} className="flex justify-between gap-3 text-xs text-slate-700"><span>{item.category}</span><b>{item.feature_count.toLocaleString('id-ID')}</b></li>)}</ul>
               </div>}
             </div>
             <p className="mt-3 text-[11px] leading-relaxed text-slate-500">Sumber: {result.area_context.source}. {result.area_context.caveat || 'Data area belum tersedia; referensi harga tetap dapat digunakan.'} Kondisi areal menjadi konteks kualitatif kesimpulan; tidak digunakan sebagai pengali harga otomatis.</p>
           </section>
-          <section aria-labelledby="market-summary-heading" className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
+          <section aria-labelledby="market-summary-heading" className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-blue-700" />
               <h3 id="market-summary-heading" className="text-sm font-bold text-slate-900">Kesimpulan indikasi harga tanah dan kondisi areal</h3>
             </div>
             {result.market_summary.price_per_are && result.market_summary.price_per_m2 ? (
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-white bg-white/90 p-4">
+                <div className="rounded-md border border-white bg-white/90 p-4">
                   <p className="text-xs font-semibold text-slate-500">Harga indikatif per are (100 m²)</p>
                   <p className="mt-1 text-xl font-black text-blue-800">{formatRupiah(result.market_summary.price_per_are.median)}</p>
                   <p className="mt-1 text-xs text-slate-500">Rentang terdeteksi: {formatRupiah(result.market_summary.price_per_are.minimum)} – {formatRupiah(result.market_summary.price_per_are.maximum)}</p>
                 </div>
-                <div className="rounded-xl border border-white bg-white/90 p-4">
+                <div className="rounded-md border border-white bg-white/90 p-4">
                   <p className="text-xs font-semibold text-slate-500">Harga indikatif per m²</p>
                   <p className="mt-1 text-xl font-black text-emerald-700">{formatRupiah(result.market_summary.price_per_m2.median)}</p>
                   <p className="mt-1 text-xs text-slate-500">Rentang terdeteksi: {formatRupiah(result.market_summary.price_per_m2.minimum)} – {formatRupiah(result.market_summary.price_per_m2.maximum)}</p>
@@ -503,14 +503,14 @@ export const BaliMarketSearchPage: React.FC = () => {
               </div>
             ) : null}
             <p className="mt-3 text-sm leading-relaxed text-slate-700">{result.market_summary.price_conclusion}</p>
-            <div className="mt-3 rounded-xl border border-blue-100 bg-white/80 p-3">
+            <div className="mt-3 rounded-md border border-blue-100 bg-white/80 p-3">
               <p className="text-xs font-bold text-blue-900">Pengaruh konteks areal pada indikasi</p>
               <p className="mt-1 text-sm leading-relaxed text-slate-700">{result.market_summary.area_implication}</p>
             </div>
             {result.market_summary.sample_count > 0 && <p className="mt-2 text-[11px] text-slate-500">Dihitung dari {result.market_summary.sample_count} kutipan harga yang mencantumkan satuan eksplisit; nominal total tanpa luas/satuan tidak dimasukkan.</p>}
           </section>
-          <p className="rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600">Sistem memprioritaskan halaman detail properti individual yang terindeks (misalnya iklan Lamudi, Rumah123, Marketplace, dan posting grup publik), bukan halaman kategori. Bila Brave tidak menemukan halaman detail, hasil portal umum dapat ditampilkan sebagai fallback. Hasil Facebook hanya berasal dari halaman yang terindeks publik; konten grup privat atau yang perlu login tidak dapat diambil. Verifikasi detail listing langsung pada tautan sumber.</p>
-          <p className="rounded-xl bg-slate-100 p-3 text-xs leading-relaxed text-slate-600">{result.note} Pencarian menggunakan nama area dari koordinat; kedekatan persis per listing tidak selalu tersedia.</p>
+          <p className="rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600">Sistem memprioritaskan halaman detail properti individual yang terindeks (misalnya iklan Lamudi, Rumah123, Marketplace, dan posting grup publik), bukan halaman kategori. Bila Brave tidak menemukan halaman detail, hasil portal umum dapat ditampilkan sebagai fallback. Hasil Facebook hanya berasal dari halaman yang terindeks publik; konten grup privat atau yang perlu login tidak dapat diambil. Verifikasi detail listing langsung pada tautan sumber.</p>
+          <p className="rounded-md bg-slate-100 p-3 text-xs leading-relaxed text-slate-600">{result.note} Pencarian menggunakan nama area dari koordinat; kedekatan persis per listing tidak selalu tersedia.</p>
         </section>
       )}
     </div>

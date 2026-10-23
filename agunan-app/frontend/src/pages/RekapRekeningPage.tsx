@@ -220,10 +220,10 @@ export const RekapRekeningPage: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-16">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 rounded-lg p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 -mt-8 -mr-8 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-semibold">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded-md text-blue-300 text-xs font-semibold">
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Rekap Otomatis Rekening Koran</span>
           </div>
@@ -239,18 +239,18 @@ export const RekapRekeningPage: React.FC = () => {
 
       {/* Upload Zone (Tampil jika belum ada data atau sedang ganti file) */}
       {!rekapData && (
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 sm:p-12 text-center transition-all">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-8 sm:p-12 text-center transition-all">
           {/* Engine Selector */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl max-w-xl mx-auto text-left">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 p-2.5 bg-slate-50 border border-slate-200/80 rounded-md max-w-xl mx-auto text-left">
             <div className="px-1">
               <span className="text-xs font-bold text-slate-800 block">Mesin Pemrosesan:</span>
               <span className="text-[11px] text-slate-500">Pilih metode ekstraksi sesuai kondisi berkas</span>
             </div>
-            <div className="flex items-center p-1 bg-slate-200/70 rounded-xl w-full sm:w-auto">
+            <div className="flex items-center p-1 bg-slate-200/70 rounded-md w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setEngineMode('client')}
-                className={`flex-1 sm:flex-initial py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-1.5 ${
+                className={`flex-1 sm:flex-initial py-1.5 px-3 text-xs font-bold rounded-md transition-all flex items-center justify-center space-x-1.5 ${
                   engineMode === 'client'
                     ? 'bg-white text-blue-700 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -262,7 +262,7 @@ export const RekapRekeningPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setEngineMode('paddle_ocr')}
-                className={`flex-1 sm:flex-initial py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-1.5 ${
+                className={`flex-1 sm:flex-initial py-1.5 px-3 text-xs font-bold rounded-md transition-all flex items-center justify-center space-x-1.5 ${
                   engineMode === 'paddle_ocr'
                     ? 'bg-white text-violet-700 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
@@ -278,13 +278,13 @@ export const RekapRekeningPage: React.FC = () => {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer ${isDragOver
+            className={`border-2 border-dashed rounded-md p-8 sm:p-12 transition-all flex flex-col items-center justify-center space-y-4 cursor-pointer ${isDragOver
               ? 'border-blue-500 bg-blue-50/70 scale-[1.01]'
               : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50/60'
               }`}
             onClick={() => fileInputRef.current?.click()}
           >
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm ${
+            <div className={`w-16 h-16 rounded-md flex items-center justify-center shadow-sm ${
               engineMode === 'paddle_ocr' ? 'bg-violet-50 text-violet-600' : 'bg-blue-50 text-blue-600'
             }`}>
               {engineMode === 'paddle_ocr' ? <Cpu className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
@@ -314,7 +314,7 @@ export const RekapRekeningPage: React.FC = () => {
             <button
               type="button"
               disabled={isProcessing}
-              className={`px-6 py-3 font-bold rounded-xl text-sm shadow-md transition-all flex items-center space-x-2 text-white ${
+              className={`px-6 py-3 font-bold rounded-md text-sm shadow-md transition-all flex items-center space-x-2 text-white ${
                 engineMode === 'paddle_ocr'
                   ? 'bg-violet-600 hover:bg-violet-500 shadow-violet-500/25'
                   : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/25'
@@ -327,7 +327,7 @@ export const RekapRekeningPage: React.FC = () => {
           </div>
 
           {errorMessage && (
-            <div className="mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between gap-3">
+            <div className="mt-4 p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-md flex items-center justify-between gap-3">
               <div className="flex items-center space-x-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{errorMessage}</span>
@@ -336,7 +336,7 @@ export const RekapRekeningPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsPasswordModalOpen(true)}
-                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold text-xs transition-colors flex items-center space-x-1 flex-shrink-0 shadow-sm"
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-md font-semibold text-xs transition-colors flex items-center space-x-1 flex-shrink-0 shadow-sm"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   <span>Masukkan Password</span>
@@ -349,7 +349,7 @@ export const RekapRekeningPage: React.FC = () => {
 
       {/* Loading state during parsing */}
       {isProcessing && (
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-12 text-center space-y-4">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-12 text-center space-y-4">
           <div className={`w-12 h-12 border-4 ${lastUsedEngine === 'paddle_ocr' ? 'border-violet-600' : 'border-blue-600'} border-t-transparent rounded-full animate-spin mx-auto`}></div>
           <div className="space-y-1">
             <h4 className="text-base font-bold text-slate-800">
@@ -370,10 +370,10 @@ export const RekapRekeningPage: React.FC = () => {
       {rekapData && !isProcessing && (
         <div className="space-y-6">
           {/* Success Banner & Primary Download Action */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
               <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-10 h-10 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
@@ -382,12 +382,12 @@ export const RekapRekeningPage: React.FC = () => {
                       File Rekening Koran Berhasil Diproses!
                     </h3>
                     {lastUsedEngine === 'paddle_ocr' ? (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-violet-100 text-violet-800 border border-violet-200 rounded-full text-[11px] font-bold">
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-violet-100 text-violet-800 border border-violet-200 rounded-md text-[11px] font-bold">
                         <Cpu className="w-3 h-3 text-violet-600" />
                         <span>PaddleOCR Engine</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 rounded-full text-[11px] font-bold">
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 rounded-md text-[11px] font-bold">
                         <Zap className="w-3 h-3 text-blue-600" />
                         <span>Mode Instan</span>
                       </span>
@@ -404,7 +404,7 @@ export const RekapRekeningPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleFiles(uploadedFiles, undefined, 'paddle_ocr')}
-                    className="px-3.5 py-2.5 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5 shadow-sm"
+                    className="px-3.5 py-2.5 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-md text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5 shadow-sm"
                     title="Jalankan analisis mendalam dengan model PaddleOCR jika ada mutasi yang belum terbaca sempurna"
                   >
                     <Cpu className="w-4 h-4 text-violet-600" />
@@ -414,7 +414,7 @@ export const RekapRekeningPage: React.FC = () => {
 
                 <button
                   onClick={handleReset}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5"
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5"
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>Unggah File Lain</span>
@@ -423,7 +423,7 @@ export const RekapRekeningPage: React.FC = () => {
                 <button
                   onClick={handleDownloadExcel}
                   disabled={isExporting}
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-emerald-700/25 transition-all flex items-center space-x-2 disabled:opacity-50"
+                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs sm:text-sm font-bold shadow-lg shadow-emerald-700/25 transition-all flex items-center space-x-2 disabled:opacity-50"
                 >
                   <Download className="w-4 h-4" />
                   <span>{isExporting ? 'Mengenerate Excel...' : 'Download Hasil Rekap Excel'}</span>
@@ -432,11 +432,11 @@ export const RekapRekeningPage: React.FC = () => {
             </div>
 
             {/* Debitur & Rekening Metadata Card */}
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 text-xs space-y-3">
+            <div className="bg-slate-50 p-5 rounded-md border border-slate-200/80 text-xs space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                 <div className="flex items-center space-x-2">
                   <span className="font-bold text-slate-700 uppercase tracking-wide">Identitas Rekening Terbaca:</span>
-                  <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] shadow-sm ${
+                  <span className={`px-2.5 py-0.5 rounded-md font-bold text-[11px] shadow-sm ${
                     rekapData.tabBank === 'BPR BANK KERTIAWAN'
                       ? 'bg-teal-700 text-white'
                       : rekapData.tabBank === 'BNI'
@@ -483,7 +483,7 @@ export const RekapRekeningPage: React.FC = () => {
                       type="text"
                       value={rekapData.namaDebitur}
                       onChange={(e) => setRekapData({ ...rekapData, namaDebitur: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                       placeholder="Contoh: I WAYAN SUDIRTA"
                     />
                   </div>
@@ -493,7 +493,7 @@ export const RekapRekeningPage: React.FC = () => {
                       type="text"
                       value={rekapData.tabBank}
                       onChange={(e) => setRekapData({ ...rekapData, tabBank: e.target.value.toUpperCase() })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                       placeholder="Contoh: BRI, BCA, MANDIRI"
                     />
                   </div>
@@ -503,7 +503,7 @@ export const RekapRekeningPage: React.FC = () => {
                       type="text"
                       value={rekapData.noRek}
                       onChange={(e) => setRekapData({ ...rekapData, noRek: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-slate-800 font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-slate-800 font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                       placeholder="Contoh: 0017-01-023456-50-8"
                     />
                   </div>
@@ -536,7 +536,7 @@ export const RekapRekeningPage: React.FC = () => {
 
             {/* Highlight Metric Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-md">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-md p-5 text-white shadow-md">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-semibold text-blue-100 uppercase tracking-wide">
                     Rata-Rata Saldo 3 Bulan Terakhir
@@ -551,7 +551,7 @@ export const RekapRekeningPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div className="bg-white rounded-md p-5 border border-slate-200 shadow-sm">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Total Mutasi Kredit
@@ -566,7 +566,7 @@ export const RekapRekeningPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div className="bg-white rounded-md p-5 border border-slate-200 shadow-sm">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     Total Mutasi Debet
@@ -583,9 +583,9 @@ export const RekapRekeningPage: React.FC = () => {
             </div>
 
             {/* Bottom Download Excel Banner */}
-            <div className="bg-slate-900 rounded-2xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="bg-slate-900 rounded-md p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
                   <FileSpreadsheet className="w-6 h-6" />
                 </div>
                 <div>
@@ -599,7 +599,7 @@ export const RekapRekeningPage: React.FC = () => {
               <button
                 onClick={handleDownloadExcel}
                 disabled={isExporting}
-                className="w-full sm:w-auto px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-700/30 transition-all flex items-center justify-center space-x-2 text-sm"
+                className="w-full sm:w-auto px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-md shadow-lg shadow-emerald-700/30 transition-all flex items-center justify-center space-x-2 text-sm"
               >
                 <Download className="w-4 h-4" />
                 <span>{isExporting ? 'Mengenerate...' : 'Download Hasil Rekap Excel'}</span>
@@ -608,7 +608,7 @@ export const RekapRekeningPage: React.FC = () => {
           </div>
 
           {/* Optional Collapsible Preview */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <button
               onClick={() => setShowPreview(!showPreview)}
               className="w-full px-6 py-4 flex items-center justify-between text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -623,12 +623,12 @@ export const RekapRekeningPage: React.FC = () => {
                   {rekapData.months.map((m, mIdx) => {
                     const stats = [statsMonth1, statsMonth2, statsMonth3][mIdx];
                     return (
-                      <div key={m.monthIndex} className="bg-slate-50 rounded-2xl border border-slate-200 p-4 flex flex-col">
+                      <div key={m.monthIndex} className="bg-slate-50 rounded-md border border-slate-200 p-4 flex flex-col">
                         <div className="font-bold text-slate-800 text-sm mb-2">{m.monthName}</div>
                         <div className="text-xs text-slate-500 mb-2">
                           Saldo Awal: <strong className="text-slate-800">{formatRupiah(m.saldoAwal)}</strong>
                         </div>
-                        <div className="max-h-80 overflow-y-auto border border-slate-200 rounded-xl bg-white mb-4">
+                        <div className="max-h-80 overflow-y-auto border border-slate-200 rounded-md bg-white mb-4">
                           <table className="w-full text-xs text-left">
                             <thead className="bg-slate-100 text-slate-600 sticky top-0">
                               <tr>
@@ -651,7 +651,7 @@ export const RekapRekeningPage: React.FC = () => {
                           </table>
                         </div>
                         {stats && (
-                          <div className="text-xs space-y-1 bg-white p-3 rounded-xl border border-slate-200 mt-auto">
+                          <div className="text-xs space-y-1 bg-white p-3 rounded-md border border-slate-200 mt-auto">
                             <div className="flex justify-between">
                               <span className="text-slate-500">Total Kredit:</span>
                               <span className="font-bold text-emerald-700">{formatRupiah(stats.totalMutasiKredit)} ({stats.jumlahMutasiKredit}x)</span>
@@ -678,11 +678,11 @@ export const RekapRekeningPage: React.FC = () => {
       {/* Modal Input Password Rekening Koran */}
       {isPasswordModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-lg shadow-2xl border border-slate-100 max-w-md w-full p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200">
             {/* Header Modal */}
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                <div className="w-11 h-11 rounded-md bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
                   <Lock className="w-5 h-5" />
                 </div>
                 <div>
@@ -700,14 +700,14 @@ export const RekapRekeningPage: React.FC = () => {
                   setIsPasswordModalOpen(false);
                   setPasswordErrorMsg(null);
                 }}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Info Bank Password Box */}
-            <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3.5 text-xs text-amber-900 space-y-1.5">
+            <div className="bg-amber-50/70 border border-amber-200/80 rounded-md p-3.5 text-xs text-amber-900 space-y-1.5">
               <div className="flex items-center space-x-1.5 font-semibold text-amber-800">
                 <KeyRound className="w-4 h-4 text-amber-600" />
                 <span>Petunjuk Password dari Bank:</span>
@@ -742,7 +742,7 @@ export const RekapRekeningPage: React.FC = () => {
                     autoFocus
                     className={`w-full pl-10 pr-11 py-2.5 bg-slate-50 border ${
                       passwordErrorMsg ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
-                    } rounded-xl text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400`}
+                    } rounded-md text-sm font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400`}
                   />
                   <button
                     type="button"
@@ -769,14 +769,14 @@ export const RekapRekeningPage: React.FC = () => {
                     setIsPasswordModalOpen(false);
                     setPasswordErrorMsg(null);
                   }}
-                  className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+                  className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-semibold transition-all"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessing || !pdfPasswordInput.trim()}
-                  className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/25 transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                  className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-xs font-bold shadow-md shadow-blue-500/25 transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
                 >
                   <Unlock className="w-3.5 h-3.5" />
                   <span>{isProcessing ? 'Membuka...' : 'Buka & Proses'}</span>
