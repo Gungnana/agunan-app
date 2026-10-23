@@ -26,11 +26,15 @@ import {
   Eye,
   EyeOff,
   X,
+  Cpu,
+  Zap,
+  Sparkles,
 } from 'lucide-react';
 import { RekapRekeningData, MonthRekap } from '../types/rekening';
 import { calculateMonthStats } from '../data/sampleRekeningData';
 import { exportRekeningToExcel } from '../utils/exportRekeningExcel';
 import { processUploadedBankStatements, PasswordRequiredError } from '../utils/bankStatementParser';
+import { parseStatementWithPaddleOCR } from '../api/rekapRekeningApi';
 
 const formatRupiah = (val: number | null | undefined): string => {
   if (val === null || val === undefined || isNaN(val)) return '-';
@@ -51,6 +55,8 @@ export const RekapRekeningPage: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [isEditingMeta, setIsEditingMeta] = useState<boolean>(false);
+  const [engineMode, setEngineMode] = useState<'client' | 'paddle_ocr'>('client');
+  const [lastUsedEngine, setLastUsedEngine] = useState<'client' | 'paddle_ocr'>('client');
 
   // PDF Password States
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
@@ -91,38 +97,55 @@ export const RekapRekeningPage: React.FC = () => {
     return statsMonth1.totalMutasiDebet + statsMonth2.totalMutasiDebet + statsMonth3.totalMutasiDebet;
   }, [statsMonth1, statsMonth2, statsMonth3]);
 
-  // Handle file processing with optional password
-  const handleFiles = async (files: File[], password?: string) => {
+  // Handle file processing with optional password and engine choice
+  const handleFiles = async (files: File[], password?: string, forceEngine?: 'client' | 'paddle_ocr') => {
     if (files.length === 0) return;
+    const activeEngine = forceEngine || engineMode;
     try {
       setIsProcessing(true);
       setErrorMessage(null);
       setPasswordErrorMsg(null);
       setUploadedFiles(files);
+      setLastUsedEngine(activeEngine);
 
-      const parsed = await processUploadedBankStatements(files, password);
+      let parsed: RekapRekeningData;
+      if (activeEngine === 'paddle_ocr') {
+        parsed = await parseStatementWithPaddleOCR(files[0], password);
+      } else {
+        parsed = await processUploadedBankStatements(files, password);
+      }
+
       setRekapData(parsed);
       setIsPasswordModalOpen(false);
       setPdfPasswordInput('');
       setPasswordProtectedFile(null);
     } catch (err: any) {
       console.error('Error processing bank statement files:', err);
-      if (
+      const isPwdReq =
         err instanceof PasswordRequiredError ||
         err.name === 'PasswordRequiredError' ||
-        /password/i.test(err.message || '')
-      ) {
+        err.response?.status === 422 ||
+        /password/i.test(err.message || '') ||
+        /password/i.test(err.response?.data?.detail || '');
+
+      if (isPwdReq) {
         setPendingFiles(files);
         setPasswordProtectedFile(files[0] || null);
         setIsPasswordModalOpen(true);
-        if (err.code === 2 || /incorrect|salah/i.test(err.message || '')) {
+        if (
+          err.code === 2 ||
+          err.response?.status === 401 ||
+          /incorrect|salah/i.test(err.message || '') ||
+          /incorrect|salah/i.test(err.response?.data?.detail || '')
+        ) {
           setPasswordErrorMsg('Password yang Anda masukkan salah. Silakan coba lagi.');
         } else {
           setPasswordErrorMsg(null);
         }
         setErrorMessage(null);
       } else {
-        setErrorMessage(err.message || 'Gagal memproses file rekening koran. Pastikan format file sesuai.');
+        const errorDetail = err.response?.data?.detail || err.message || 'Gagal memproses file rekening koran. Pastikan format file sesuai.';
+        setErrorMessage(errorDetail);
       }
     } finally {
       setIsProcessing(false);
@@ -217,6 +240,40 @@ export const RekapRekeningPage: React.FC = () => {
       {/* Upload Zone (Tampil jika belum ada data atau sedang ganti file) */}
       {!rekapData && (
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 sm:p-12 text-center transition-all">
+          {/* Engine Selector */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl max-w-xl mx-auto text-left">
+            <div className="px-1">
+              <span className="text-xs font-bold text-slate-800 block">Mesin Pemrosesan:</span>
+              <span className="text-[11px] text-slate-500">Pilih metode ekstraksi sesuai kondisi berkas</span>
+            </div>
+            <div className="flex items-center p-1 bg-slate-200/70 rounded-xl w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setEngineMode('client')}
+                className={`flex-1 sm:flex-initial py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-1.5 ${
+                  engineMode === 'client'
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                <span>Mode Instan (PDF Asli)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEngineMode('paddle_ocr')}
+                className={`flex-1 sm:flex-initial py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-1.5 ${
+                  engineMode === 'paddle_ocr'
+                    ? 'bg-white text-violet-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Cpu className="w-3.5 h-3.5 text-violet-600" />
+                <span>PaddleOCR AI (Scan/Foto)</span>
+              </button>
+            </div>
+          </div>
+
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -227,8 +284,10 @@ export const RekapRekeningPage: React.FC = () => {
               }`}
             onClick={() => fileInputRef.current?.click()}
           >
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
-              <UploadCloud className="w-8 h-8" />
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm ${
+              engineMode === 'paddle_ocr' ? 'bg-violet-50 text-violet-600' : 'bg-blue-50 text-blue-600'
+            }`}>
+              {engineMode === 'paddle_ocr' ? <Cpu className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
             </div>
 
             <div className="space-y-1">
@@ -236,7 +295,7 @@ export const RekapRekeningPage: React.FC = () => {
                 Pilih atau Tarik File Rekening Koran ke Sini
               </h3>
               <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-                Mendukung berkas <strong>PDF e-statement</strong>, <strong>Excel (.xlsx, .xls)</strong>, atau <strong>CSV</strong> (Bisa 1 file 3 bulan atau hingga 3 file per bulan).
+                Mendukung berkas <strong>PDF e-statement</strong>, <strong>Scan / Foto (.jpg, .png)</strong>, <strong>Excel</strong>, atau <strong>CSV</strong>.
               </p>
             </div>
 
@@ -244,7 +303,7 @@ export const RekapRekeningPage: React.FC = () => {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".pdf,.xlsx,.xls,.csv,.txt"
+              accept=".pdf,.xlsx,.xls,.csv,.txt,.jpg,.jpeg,.png,.webp"
               className="hidden"
               onChange={(e) => {
                 const files = Array.from(e.target.files || []);
@@ -255,9 +314,13 @@ export const RekapRekeningPage: React.FC = () => {
             <button
               type="button"
               disabled={isProcessing}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/25 transition-all flex items-center space-x-2"
+              className={`px-6 py-3 font-bold rounded-xl text-sm shadow-md transition-all flex items-center space-x-2 text-white ${
+                engineMode === 'paddle_ocr'
+                  ? 'bg-violet-600 hover:bg-violet-500 shadow-violet-500/25'
+                  : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/25'
+              }`}
             >
-              <span>{isProcessing ? 'Memproses Berkas...' : 'Unggah File Rekening Koran'}</span>
+              <span>{isProcessing ? 'Memproses Berkas...' : engineMode === 'paddle_ocr' ? 'Scan dengan PaddleOCR AI' : 'Unggah File Rekening Koran'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -287,11 +350,17 @@ export const RekapRekeningPage: React.FC = () => {
       {/* Loading state during parsing */}
       {isProcessing && (
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-12 text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className={`w-12 h-12 border-4 ${lastUsedEngine === 'paddle_ocr' ? 'border-violet-600' : 'border-blue-600'} border-t-transparent rounded-full animate-spin mx-auto`}></div>
           <div className="space-y-1">
-            <h4 className="text-base font-bold text-slate-800">Sedang Menganalisis Rekening Koran...</h4>
-            <p className="text-xs text-slate-500">
-              Mengekstrak tanggal mutasi, debet, kredit, saldo berjalan, dan menyusun formula Excel.
+            <h4 className="text-base font-bold text-slate-800">
+              {lastUsedEngine === 'paddle_ocr'
+                ? 'Sedang Memproses dengan PaddleOCR AI Backend...'
+                : 'Sedang Menganalisis Rekening Koran...'}
+            </h4>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              {lastUsedEngine === 'paddle_ocr'
+                ? 'Model Deep Learning PaddleOCR sedang mendeteksi blok teks gambar, koordinat baris, dan merekonstruksi mutasi transaksi...'
+                : 'Mengekstrak tanggal mutasi, debet, kredit, saldo berjalan, dan menyusun formula Excel.'}
             </p>
           </div>
         </div>
@@ -308,16 +377,41 @@ export const RekapRekeningPage: React.FC = () => {
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">
-                    File Rekening Koran Berhasil Diproses!
-                  </h3>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="text-lg font-bold text-slate-900">
+                      File Rekening Koran Berhasil Diproses!
+                    </h3>
+                    {lastUsedEngine === 'paddle_ocr' ? (
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-violet-100 text-violet-800 border border-violet-200 rounded-full text-[11px] font-bold">
+                        <Cpu className="w-3 h-3 text-violet-600" />
+                        <span>PaddleOCR Engine</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 rounded-full text-[11px] font-bold">
+                        <Zap className="w-3 h-3 text-blue-600" />
+                        <span>Mode Instan</span>
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Hasil rekapan 3 bulan telah selesai dihitung dan siap diunduh dalam format Excel berumus.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                {lastUsedEngine === 'client' && uploadedFiles.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleFiles(uploadedFiles, undefined, 'paddle_ocr')}
+                    className="px-3.5 py-2.5 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5 shadow-sm"
+                    title="Jalankan analisis mendalam dengan model PaddleOCR jika ada mutasi yang belum terbaca sempurna"
+                  >
+                    <Cpu className="w-4 h-4 text-violet-600" />
+                    <span>Scan Ulang via PaddleOCR</span>
+                  </button>
+                )}
+
                 <button
                   onClick={handleReset}
                   className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5"
