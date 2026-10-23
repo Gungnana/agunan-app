@@ -1,13 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { MapPin, WalletCards, UserX } from 'lucide-react';
+import { MapPin, WalletCards, UserX, Compass } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
 
   const navItems = [
     { to: '/', label: 'Cari Harga Tanah', icon: MapPin, roles: ['ANALIS', 'REVIEWER', 'ADMIN'] },
+    { to: '/validasi-bhumi', label: 'Validasi Bhumi BPN', icon: Compass, roles: ['ANALIS', 'REVIEWER', 'ADMIN'] },
     { to: '/rekap-rekening', label: 'Rekap Rekening Koran', icon: WalletCards, roles: ['ANALIS', 'REVIEWER', 'ADMIN'] },
     { to: '/logbook-rejection', label: 'Logbook Rejection', icon: UserX, roles: ['ANALIS', 'REVIEWER', 'ADMIN'] },
   ];
