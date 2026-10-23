@@ -26,7 +26,10 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginRequest = error.config?.url?.includes('/auth/login');
+    const isMarketSearch = error.config?.url?.includes('/market-search');
+
+    if (error.response?.status === 401 && !isLoginRequest && !isMarketSearch) {
       // Hapus token dan alihkan ke login jika di browser
       localStorage.removeItem('agunan_token');
       localStorage.removeItem('agunan_user');

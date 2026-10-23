@@ -4,14 +4,14 @@ import asyncio
 import json
 import re
 from collections import Counter
-from html.parser import HTMLParser
 from html import unescape
-from typing import Any
+from html.parser import HTMLParser
+from typing import Any, Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.config import settings
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user_optional
 from app.models.user import User
 from app.services.search_service import search_web_with_fallback
 
@@ -609,7 +609,7 @@ async def search_bali_land_market(
     lon: float = Query(..., ge=-180, le=180),
     land_type: str = Query("tanah_kosong", pattern="^(tanah_kosong|kavling_perumahan|pertanian_perkebunan|komersial|pariwisata|lainnya)$"),
     land_shape: str = Query("persegi", pattern="^(persegi|persegi_panjang|tidak_beraturan|segitiga|l|lainnya)$"),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ) -> dict[str, Any]:
     """Search web references for land listings near a coordinate in Bali."""
     if not _inside_bali_bounds(lat, lon):

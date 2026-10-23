@@ -84,6 +84,17 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api/v1")
 
 
+@app.on_event("startup")
+def startup_db_init():
+    """Otomatis pastikan struktur tabel database dibuat saat aplikasi mulai."""
+    try:
+        from app.db.init_db import init_database
+        init_database()
+    except Exception as exc:
+        import logging
+        logging.getLogger("startup").warning(f"Auto init database note: {exc}")
+
+
 @app.get("/health", tags=["Sistem"])
 @app.get("/api/health", tags=["Sistem"])
 def health_check():
