@@ -483,32 +483,6 @@ export const BaliMarketSearchPage: React.FC = () => {
             </div>
             <p className="mt-3 text-[11px] leading-relaxed text-slate-500">Sumber: {result.area_context.source}. {result.area_context.caveat || 'Data area belum tersedia; referensi harga tetap dapat digunakan.'} Kondisi areal menjadi konteks kualitatif kesimpulan; tidak digunakan sebagai pengali harga otomatis.</p>
           </section>
-          <section aria-labelledby="market-summary-heading" className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-blue-700" />
-              <h3 id="market-summary-heading" className="text-sm font-bold text-slate-900">Kesimpulan indikasi harga tanah dan kondisi areal</h3>
-            </div>
-            {result.market_summary.price_per_are && result.market_summary.price_per_m2 ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-md border border-white bg-white/90 p-4">
-                  <p className="text-xs font-semibold text-slate-500">Harga indikatif per are (100 m²)</p>
-                  <p className="mt-1 text-xl font-black text-blue-800">{formatRupiah(result.market_summary.price_per_are.median)}</p>
-                  <p className="mt-1 text-xs text-slate-500">Rentang terdeteksi: {formatRupiah(result.market_summary.price_per_are.minimum)} – {formatRupiah(result.market_summary.price_per_are.maximum)}</p>
-                </div>
-                <div className="rounded-md border border-white bg-white/90 p-4">
-                  <p className="text-xs font-semibold text-slate-500">Harga indikatif per m²</p>
-                  <p className="mt-1 text-xl font-black text-emerald-700">{formatRupiah(result.market_summary.price_per_m2.median)}</p>
-                  <p className="mt-1 text-xs text-slate-500">Rentang terdeteksi: {formatRupiah(result.market_summary.price_per_m2.minimum)} – {formatRupiah(result.market_summary.price_per_m2.maximum)}</p>
-                </div>
-              </div>
-            ) : null}
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">{result.market_summary.price_conclusion}</p>
-            <div className="mt-3 rounded-md border border-blue-100 bg-white/80 p-3">
-              <p className="text-xs font-bold text-blue-900">Pengaruh konteks areal pada indikasi</p>
-              <p className="mt-1 text-sm leading-relaxed text-slate-700">{result.market_summary.area_implication}</p>
-            </div>
-            {result.market_summary.sample_count > 0 && <p className="mt-2 text-[11px] text-slate-500">Dihitung dari {result.market_summary.sample_count} kutipan harga yang mencantumkan satuan eksplisit; nominal total tanpa luas/satuan tidak dimasukkan.</p>}
-          </section>
           <p className="rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600">Sistem memprioritaskan halaman detail properti individual yang terindeks (misalnya iklan Lamudi, Rumah123, Marketplace, dan posting grup publik), bukan halaman kategori. Bila Brave tidak menemukan halaman detail, hasil portal umum dapat ditampilkan sebagai fallback. Hasil Facebook hanya berasal dari halaman yang terindeks publik; konten grup privat atau yang perlu login tidak dapat diambil. Verifikasi detail listing langsung pada tautan sumber.</p>
           <p className="rounded-md bg-slate-100 p-3 text-xs leading-relaxed text-slate-600">{result.note} Pencarian menggunakan nama area dari koordinat; kedekatan persis per listing tidak selalu tersedia.</p>
         </section>

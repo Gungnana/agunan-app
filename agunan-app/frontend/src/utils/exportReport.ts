@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import QRCode from 'qrcode';
 import { BuildingItem, EvaluatedComparableItem } from '../components/BceCalculator';
 
 export interface ReportData {
@@ -8,6 +9,14 @@ export interface ReportData {
   collateralCoordinates: { lat: number; lon: number };
   collateralAreaM2: number;
   analisName: string;
+  penilaiName?: string;
+  penilaiJabatan?: string;
+  penyetujuName?: string;
+  penyetujuJabatan?: string;
+  shmImageBase64?: string | null;
+  gistaruImageBase64?: string | null;
+  googleMapsUrl?: string;
+  bhumiUrl?: string;
   activeTanahPricePerM2: number;
   activeTanahBcePercent: number;
   nilaiPasarTanah: number;
@@ -273,7 +282,26 @@ export async function exportToExcel(data: ReportData) {
   window.URL.revokeObjectURL(url);
 }
 
-export function exportToPdf(data: ReportData) {
+async function loadBase64Image(src: string): Promise<string | null> {
+  if (!src) return null;
+  if (src.startsWith('data:image')) return src;
+  try {
+    const res = await fetch(src);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.warn('Gagal memuat logo untuk PDF:', err);
+    return null;
+  }
+}
+
+export async function exportToPdf(data: ReportData): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -285,52 +313,70 @@ export function exportToPdf(data: ReportData) {
     return `Rp ${Math.round(val).toLocaleString('id-ID')}`;
   };
 
-  // Header Banner
-  doc.setFillColor(30, 58, 138); // Blue 900
-  doc.rect(0, 0, 210, 24, 'F');
+  const penilaiName = data.penilaiName || data.analisName || 'user';
+  const penilaiJabatan = data.penilaiJabatan || 'jabatan';
+  const penyetujuName = data.penyetujuName || 'admin_1';
+  const penyetujuJabatan = data.penyetujuJabatan || 'jabatan';
 
-  doc.setTextColor(255, 255, 255);
+  const logoBase64 = await loadBase64Image('/logo1.png');
+
+  // ==================== HALAMAN 1 ====================
+  // 1. Logo Bank Kertiawan (Kiri Atas)
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, 'PNG', 14, 10, 48, 11);
+    } catch {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 58, 138);
+      doc.text('PT. BPR BANK KERTIAWAN', 14, 18);
+    }
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(30, 58, 138);
+    doc.text('PT. BPR BANK KERTIAWAN', 14, 18);
+  }
+
+  // 2. Judul Dokumen (Tengah)
+  doc.setTextColor(15, 23, 42); // Slate 900
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('SISTEM ANALISA AGUNAN BERBASIS DATA PASAR', 105, 11, { align: 'center' });
+  doc.setFontSize(15);
+  doc.text('Hasil Penilaian Agunan', 105, 34, { align: 'center' });
 
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Standard Penilaian Indonesia (SPI) • Bank Risk & Appraisal Assessment', 105, 18, {
-    align: 'center',
+  // 3. Metadata Informasi Agunan
+  const dateFormatted = new Date().toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   });
 
-  // Informasi Agunan
-  doc.setTextColor(30, 41, 59); // Slate 800
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('INFORMASI AGUNAN & PENILAIAN', 14, 32);
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  const metadata = [
+  const metadataRows = [
     ['Lokasi Titik', `: ${data.collateralLocationName || 'Area Bali'}`],
     ['Koordinat', `: ${data.collateralCoordinates.lat}, ${data.collateralCoordinates.lon}`],
     ['Luas Tanah Agunan', `: ${data.collateralAreaM2} m² (${(data.collateralAreaM2 / 100).toFixed(2)} are)`],
-    ['Tanggal Penilaian', `: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}`],
-    ['Analis Kredit', `: ${data.analisName || 'Budi Pratama (Analis Kredit)'}`],
+    ['Tanggal Penilaian', `: ${dateFormatted}`],
+    ['Analis Kredit', `: ${penilaiName} (${penilaiJabatan})`],
   ];
 
   autoTable(doc, {
-    startY: 35,
-    body: metadata,
+    startY: 40,
+    body: metadataRows,
     theme: 'plain',
-    styles: { fontSize: 8.5, cellPadding: 1.2 },
+    styles: { fontSize: 8, cellPadding: 0.9, textColor: [15, 23, 42] },
     columnStyles: {
       0: { fontStyle: 'bold', cellWidth: 38 },
-      1: { cellWidth: 150 },
+      1: { cellWidth: 144 },
     },
+    margin: { left: 14, right: 14 },
   });
 
-  // TABEL 1: HASIL 3 DATA PEMBANDING
+  // 4. Tabel 1: Data Pembanding Pasar
   const startY1 = (doc as any).lastAutoTable.finalY + 4;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
+  doc.setTextColor(15, 23, 42);
   doc.text('1. DATA PEMBANDING PASAR (SETELAH FAKTOR JARAK & DC)', 14, startY1);
 
   const compRows = data.comparables.map((item, idx) => [
@@ -350,23 +396,25 @@ export function exportToPdf(data: ReportData) {
     ],
     body: compRows.length > 0 ? compRows : [['—', 'Belum ada data pembanding dipilih', '—', '—', '—', '—', '—']],
     theme: 'striped',
-    headStyles: { fillColor: [15, 23, 42], fontSize: 8, fontStyle: 'bold' },
-    styles: { fontSize: 7.5, cellPadding: 2 },
+    headStyles: { fillColor: [15, 23, 42], fontSize: 7.5, fontStyle: 'bold', textColor: [255, 255, 255] },
+    styles: { fontSize: 7, cellPadding: 1.8 },
     columnStyles: {
       0: { cellWidth: 8, halign: 'center' },
-      1: { cellWidth: 55 },
+      1: { cellWidth: 54 },
       2: { cellWidth: 16, halign: 'center' },
-      3: { cellWidth: 16, halign: 'center' },
+      3: { cellWidth: 14, halign: 'center' },
       4: { cellWidth: 30, halign: 'right' },
       5: { cellWidth: 30, halign: 'right' },
       6: { cellWidth: 30, halign: 'right' },
     },
+    margin: { left: 14, right: 14 },
   });
 
-  // TABEL 2: KALKULATOR SKOR BCE
+  // 5. Tabel 2: Rekapitulasi Skor Kalkulator BCE
   const startY2 = (doc as any).lastAutoTable.finalY + 4;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
+  doc.setTextColor(15, 23, 42);
   doc.text('2. REKAPITULASI SKOR KALKULATOR BCE', 14, startY2);
 
   const bceRows = [
@@ -395,20 +443,27 @@ export function exportToPdf(data: ReportData) {
     head: [['Kriteria Evaluasi', 'Skor', 'Kriteria Evaluasi', 'Skor / Predikat']],
     body: bceRows,
     theme: 'grid',
-    headStyles: { fillColor: [245, 158, 11], fontSize: 8, textColor: [15, 23, 42] },
-    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [249, 115, 22], fontSize: 7.5, textColor: [15, 23, 42], fontStyle: 'bold' }, // Orange
+    styles: { fontSize: 7.5, cellPadding: 1.8 },
     columnStyles: {
-      0: { cellWidth: 60, fontStyle: 'bold' },
-      1: { cellWidth: 30, halign: 'center' },
-      2: { cellWidth: 65, fontStyle: 'bold' },
+      0: { cellWidth: 58, fontStyle: 'bold' },
+      1: { cellWidth: 26, halign: 'center' },
+      2: { cellWidth: 68, fontStyle: 'bold' },
       3: { cellWidth: 30, halign: 'center', fontStyle: 'bold' },
     },
+    didParseCell: (dataCell) => {
+      if (dataCell.row.index === 2) {
+        dataCell.cell.styles.fontStyle = 'bold';
+      }
+    },
+    margin: { left: 14, right: 14 },
   });
 
-  // TABEL 3: KESIMPULAN NILAI PASAR & NILAI BCE (DOKUMEN INTI)
-  const startY3 = (doc as any).lastAutoTable.finalY + 6;
+  // 6. Tabel 3: Kesimpulan Rekapitulasi Nilai Pasar & Nilai BCE
+  const startY3 = (doc as any).lastAutoTable.finalY + 4;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
+  doc.setTextColor(15, 23, 42);
   doc.text('3. KESIMPULAN REKAPITULASI NILAI PASAR & NILAI BCE', 14, startY3);
 
   const summaryRows: any[] = [
@@ -459,10 +514,10 @@ export function exportToPdf(data: ReportData) {
     ],
     body: summaryRows,
     theme: 'grid',
-    headStyles: { fillColor: [30, 41, 59], fontSize: 8.5, fontStyle: 'bold' },
-    styles: { fontSize: 8, cellPadding: 2.5 },
+    headStyles: { fillColor: [15, 23, 42], fontSize: 7.5, fontStyle: 'bold', textColor: [255, 255, 255] },
+    styles: { fontSize: 7.5, cellPadding: 2 },
     columnStyles: {
-      0: { cellWidth: 48, fontStyle: 'bold' },
+      0: { cellWidth: 44, fontStyle: 'bold' },
       1: { cellWidth: 20, halign: 'right' },
       2: { cellWidth: 32, halign: 'right' },
       3: { cellWidth: 16, halign: 'center' },
@@ -470,43 +525,155 @@ export function exportToPdf(data: ReportData) {
       5: { cellWidth: 35, halign: 'right', fontStyle: 'bold' },
     },
     didParseCell: (dataCell) => {
-      // Highlight row total
       if (dataCell.row.index === summaryRows.length - 1) {
         dataCell.cell.styles.fillColor = [241, 245, 249];
         dataCell.cell.styles.fontStyle = 'bold';
         dataCell.cell.styles.textColor = [15, 23, 42];
       }
     },
+    margin: { left: 14, right: 14 },
   });
 
-  // Tanda Tangan
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
-  if (finalY < 255) {
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Dibuat & Dinilai Oleh:', 24, finalY);
-    doc.text('Disetujui / Direview Oleh:', 140, finalY);
+  // 7. Area Tanda Tangan (Dinilai Oleh & Disetujui Oleh)
+  const finalY = (doc as any).lastAutoTable.finalY;
+  const sigY = Math.max(finalY + 8, 232);
 
-    doc.setFont('helvetica', 'bold');
-    doc.text(data.analisName || 'Budi Pratama', 24, finalY + 22);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Analis Kredit Bank', 24, finalY + 26);
+  // Kiri: Dinilai Oleh
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text('Dinilai Oleh', 24, sigY);
 
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(159, 18, 57); // Maroon/wine red persis seperti PDF
+  doc.text(penilaiName, 24, sigY + 22);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(penilaiJabatan, 24, sigY + 26);
+
+  // Kanan: Disetujui Oleh
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text('Disetujui Oleh', 142, sigY);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(159, 18, 57); // Maroon/wine red persis seperti PDF
+  doc.text(penyetujuName, 142, sigY + 22);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(penyetujuJabatan, 142, sigY + 26);
+
+
+  // ==================== HALAMAN 2: LAMPIRAN ====================
+  doc.addPage();
+
+  // 1. Logo Bank Kertiawan (Kiri Atas Halaman 2)
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, 'PNG', 14, 10, 48, 11);
+    } catch {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 58, 138);
+      doc.text('PT. BPR BANK KERTIAWAN', 14, 18);
+    }
+  } else {
     doc.setFont('helvetica', 'bold');
-    doc.text('( .................................................. )', 140, finalY + 22);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Komite Kredit / Reviewer', 140, finalY + 26);
+    doc.setFontSize(11);
+    doc.setTextColor(30, 58, 138);
+    doc.text('PT. BPR BANK KERTIAWAN', 14, 18);
   }
 
-  // Footer Disclaimer
-  doc.setFontSize(7);
-  doc.setTextColor(148, 163, 184); // Slate 400
-  doc.text(
-    'Dokumen ini di-generate otomatis oleh Sistem Analisa Agunan Berbasis Data Pasar untuk keperluan analisa internal kredit.',
-    105,
-    290,
-    { align: 'center' }
-  );
+  // 2. Judul Lampiran
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(15, 23, 42);
+  doc.text('Lampiran', 14, 28);
 
-  doc.save(`Laporan_Penilaian_Agunan_${new Date().toISOString().slice(0, 10)}.pdf`);
+  const boxX = 14;
+  const boxW = 182;
+  const boxH = 68;
+
+  // 3. Kotak 1: Gambar SHM BHUMI ATR BPN
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text('Gambar SHM BHUMI ATR BPN', 14, 34);
+
+  const box1Y = 36;
+  doc.setDrawColor(100, 116, 139);
+  doc.setLineDashPattern([1.5, 1.5], 0);
+  doc.rect(boxX, box1Y, boxW, boxH);
+  doc.setLineDashPattern([], 0);
+
+  if (data.shmImageBase64) {
+    try {
+      doc.addImage(data.shmImageBase64, 'JPEG', boxX + 1, box1Y + 1, boxW - 2, boxH - 2);
+    } catch (e) {
+      console.warn('Gagal render gambar SHM ke PDF:', e);
+    }
+  }
+
+  // 4. Kotak 2: Gambar GISTARU
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text('Gambar GISTARU', 14, 110);
+
+  const box2Y = 112;
+  doc.setDrawColor(100, 116, 139);
+  doc.setLineDashPattern([1.5, 1.5], 0);
+  doc.rect(boxX, box2Y, boxW, boxH);
+  doc.setLineDashPattern([], 0);
+
+  if (data.gistaruImageBase64) {
+    try {
+      doc.addImage(data.gistaruImageBase64, 'JPEG', boxX + 1, box2Y + 1, boxW - 2, boxH - 2);
+    } catch (e) {
+      console.warn('Gagal render gambar GISTARU ke PDF:', e);
+    }
+  }
+
+  // 5. Bagian QR Code (Bawah Halaman 2)
+  const lat = data.collateralCoordinates?.lat ?? -8.65;
+  const lon = data.collateralCoordinates?.lon ?? 115.2167;
+  const bhumiUrl = data.bhumiUrl || `https://bhumi.atrbpn.go.id/peta?lat=${lat}&lng=${lon}&zoom=18`;
+  const googleMapsUrl = data.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+
+  try {
+    const [bhumiQrDataUrl, gmapsQrDataUrl] = await Promise.all([
+      QRCode.toDataURL(bhumiUrl, { margin: 1, width: 256 }),
+      QRCode.toDataURL(googleMapsUrl, { margin: 1, width: 256 }),
+    ]);
+
+    const qrY = 190;
+    const qrSize = 36;
+    const qr1X = 48;
+    const qr2X = 126;
+
+    // QR 1: Bhumi ATR BPN
+    doc.addImage(bhumiQrDataUrl, 'PNG', qr1X, qrY, qrSize, qrSize);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Bhumi ATR BPN', qr1X + qrSize / 2, qrY + qrSize + 5, { align: 'center' });
+
+    // QR 2: Google Maps
+    doc.addImage(gmapsQrDataUrl, 'PNG', qr2X, qrY, qrSize, qrSize);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Google Maps', qr2X + qrSize / 2, qrY + qrSize + 5, { align: 'center' });
+  } catch (qrErr) {
+    console.warn('Gagal generate QR Code:', qrErr);
+  }
+
+  doc.save(`Hasil_Penilaian_Agunan_${new Date().toISOString().slice(0, 10)}.pdf`);
 }

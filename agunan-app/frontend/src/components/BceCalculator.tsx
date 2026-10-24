@@ -1,5 +1,23 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Trash2, Building2, Calculator, Sparkles, Layers, FileSpreadsheet, FileText } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Plus,
+  Trash2,
+  Building2,
+  Calculator,
+  Sparkles,
+  Layers,
+  FileSpreadsheet,
+  FileText,
+  QrCode,
+  Image as ImageIcon,
+  ExternalLink,
+  Upload,
+  UserCheck,
+  X,
+  MapPin,
+  CheckCircle2,
+} from 'lucide-react';
+import QRCode from 'qrcode';
 import { useAuth } from '../hooks/useAuth';
 import { exportToExcel, exportToPdf } from '../utils/exportReport';
 
@@ -187,6 +205,68 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
     return nilaiBceTanah + totalNilaiBceBangunan;
   }, [nilaiBceTanah, totalNilaiBceBangunan]);
 
+  // Supporting attachments (SHM Bhumi & GISTARU)
+  const [shmImage, setShmImage] = useState<string | null>(null);
+  const [shmFileName, setShmFileName] = useState<string | null>(null);
+  const [gistaruImage, setGistaruImage] = useState<string | null>(null);
+  const [gistaruFileName, setGistaruFileName] = useState<string | null>(null);
+
+  // Signatures (User / Analis & Admin / Reviewer)
+  const [penilaiName, setPenilaiName] = useState<string>(user?.full_name || 'Budi Pratama');
+  const [penilaiJabatan, setPenilaiJabatan] = useState<string>('Analis Kredit');
+  const [penyetujuName, setPenyetujuName] = useState<string>('Siti Rahayu');
+  const [penyetujuJabatan, setPenyetujuJabatan] = useState<string>('Reviewer Agunan / Pimpinan Cabang');
+
+  // QR Code States
+  const [bhumiQrDataUrl, setBhumiQrDataUrl] = useState<string>('');
+  const [gmapsQrDataUrl, setGmapsQrDataUrl] = useState<string>('');
+
+  const lat = collateralCoordinates?.lat ?? -8.65;
+  const lon = collateralCoordinates?.lon ?? 115.2167;
+  const bhumiUrl = `https://bhumi.atrbpn.go.id/peta?lat=${lat}&lng=${lon}&zoom=18`;
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all([
+      QRCode.toDataURL(bhumiUrl, { margin: 1, width: 256 }),
+      QRCode.toDataURL(googleMapsUrl, { margin: 1, width: 256 }),
+    ])
+      .then(([bUrl, gUrl]) => {
+        if (isMounted) {
+          setBhumiQrDataUrl(bUrl);
+          setGmapsQrDataUrl(gUrl);
+        }
+      })
+      .catch((err) => {
+        console.warn('QR Code generation error:', err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [bhumiUrl, googleMapsUrl]);
+
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: 'shm' | 'gistaru'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      if (type === 'shm') {
+        setShmImage(result);
+        setShmFileName(file.name);
+      } else {
+        setGistaruImage(result);
+        setGistaruFileName(file.name);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // State & Handlers untuk Export Excel dan PDF
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -195,7 +275,15 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
     collateralLocationName: collateralLocationName || 'Area Bali',
     collateralCoordinates: collateralCoordinates || { lat: -8.65, lon: 115.2167 },
     collateralAreaM2,
-    analisName: user?.full_name || 'Budi Pratama (Analis Kredit)',
+    analisName: penilaiName || user?.full_name || 'Budi Pratama (Analis Kredit)',
+    penilaiName,
+    penilaiJabatan,
+    penyetujuName,
+    penyetujuJabatan,
+    shmImageBase64: shmImage,
+    gistaruImageBase64: gistaruImage,
+    googleMapsUrl,
+    bhumiUrl,
     activeTanahPricePerM2,
     activeTanahBcePercent,
     nilaiPasarTanah,
@@ -225,10 +313,10 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
     }
   };
 
-  const handleExportPdf = () => {
+  const handleExportPdf = async () => {
     try {
       setIsExportingPdf(true);
-      exportToPdf(getReportData());
+      await exportToPdf(getReportData());
     } catch (err) {
       console.error('Gagal export PDF:', err);
     } finally {
@@ -829,6 +917,284 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
           <p className="text-[11px] text-slate-400 font-mono">
             Rumus: Nilai Pasar = Luas × Harga Pasar/m² • Nilai BCE = Nilai Pasar × BCE%
           </p>
+        </div>
+      </section>
+
+      {/* SECTION LAMPIRAN, QR CODE & PENANDATANGAN DOKUMEN (PDF 2 HALAMAN) */}
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <QrCode className="h-4 w-4 text-blue-600" />
+              Lampiran Pendukung, QR Code & Penandatangan Dokumen (Laporan PDF 2 Halaman)
+            </h3>
+            <p className="text-xs text-slate-500">
+              Kelola QR Code lokasi titik agunan, unggah foto pendukung (SHM BHUMI & GISTARU), serta nama penandatangan untuk PDF hasil penilaian.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={isExportingPdf}
+            className="inline-flex items-center gap-2 rounded-md bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition disabled:opacity-50"
+          >
+            <FileText className="h-4 w-4" />
+            {isExportingPdf ? 'Menyiapkan PDF 2 Halaman…' : 'Unduh Laporan PDF (2 Halaman)'}
+          </button>
+        </div>
+
+        {/* 1. QR Code Lokasi Agunan */}
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 text-blue-600" />
+            1. QR Code Lokasi Agunan (Dicetak Otomatis pada Halaman 2)
+          </h4>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* QR Bhumi ATR BPN */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 flex flex-col sm:flex-row items-center gap-4">
+              <div className="bg-white p-2 rounded-md border border-slate-200 shadow-xs flex-shrink-0">
+                {bhumiQrDataUrl ? (
+                  <img src={bhumiQrDataUrl} alt="QR Bhumi ATR BPN" className="h-28 w-28 object-contain" />
+                ) : (
+                  <div className="h-28 w-28 flex items-center justify-center text-slate-400 text-xs">Memuat QR…</div>
+                )}
+              </div>
+              <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
+                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
+                  Bhumi ATR BPN
+                </span>
+                <p className="text-xs font-semibold text-slate-800 truncate">
+                  Koordinat: {lat}, {lon}
+                </p>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  Memindai QR ini akan langsung membuka peta bidang resmi Bhumi ATR BPN pada koordinat agunan.
+                </p>
+                <a
+                  href={bhumiUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 transition pt-1"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Uji Buka di Bhumi ATR BPN
+                </a>
+              </div>
+            </div>
+
+            {/* QR Google Maps */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 flex flex-col sm:flex-row items-center gap-4">
+              <div className="bg-white p-2 rounded-md border border-slate-200 shadow-xs flex-shrink-0">
+                {gmapsQrDataUrl ? (
+                  <img src={gmapsQrDataUrl} alt="QR Google Maps" className="h-28 w-28 object-contain" />
+                ) : (
+                  <div className="h-28 w-28 flex items-center justify-center text-slate-400 text-xs">Memuat QR…</div>
+                )}
+              </div>
+              <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
+                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800">
+                  Google Maps
+                </span>
+                <p className="text-xs font-semibold text-slate-800 truncate">
+                  Titik Pin: {lat}, {lon}
+                </p>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  Memindai QR ini akan membuka lokasi titik peninjauan di aplikasi atau browser Google Maps.
+                </p>
+                <a
+                  href={googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 transition pt-1"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Uji Buka di Google Maps
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Unggah Foto Pendukung */}
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
+            <ImageIcon className="h-3.5 w-3.5 text-blue-600" />
+            2. Foto Pendukung Lampiran (Dicetak pada Halaman 2)
+          </h4>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Upload SHM BHUMI ATR BPN */}
+            <div className="rounded-lg border border-slate-200 p-4 bg-white">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <CheckCircle2 className={`h-3.5 w-3.5 ${shmImage ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  Gambar SHM BHUMI ATR BPN
+                </label>
+                {shmImage && (
+                  <button
+                    type="button"
+                    onClick={() => { setShmImage(null); setShmFileName(null); }}
+                    className="text-[11px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
+                  >
+                    <X className="h-3 w-3" /> Hapus
+                  </button>
+                )}
+              </div>
+
+              {shmImage ? (
+                <div className="space-y-2">
+                  <div className="relative h-44 w-full rounded border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+                    <img src={shmImage} alt="SHM BHUMI Preview" className="h-full w-full object-contain" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate">Berkas: {shmFileName}</p>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center h-44 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50/50 hover:bg-blue-50/40 hover:border-blue-400 transition">
+                  <Upload className="h-6 w-6 text-slate-400 mb-1" />
+                  <span className="text-xs font-bold text-slate-700">Pilih / Seret Gambar SHM</span>
+                  <span className="text-[11px] text-slate-400 mt-0.5">Format JPG, PNG, WEBP (Maks 10MB)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'shm')}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* Upload GISTARU */}
+            <div className="rounded-lg border border-slate-200 p-4 bg-white">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <CheckCircle2 className={`h-3.5 w-3.5 ${gistaruImage ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  Gambar Hasil GISTARU
+                </label>
+                {gistaruImage && (
+                  <button
+                    type="button"
+                    onClick={() => { setGistaruImage(null); setGistaruFileName(null); }}
+                    className="text-[11px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
+                  >
+                    <X className="h-3 w-3" /> Hapus
+                  </button>
+                )}
+              </div>
+
+              {gistaruImage ? (
+                <div className="space-y-2">
+                  <div className="relative h-44 w-full rounded border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+                    <img src={gistaruImage} alt="GISTARU Preview" className="h-full w-full object-contain" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate">Berkas: {gistaruFileName}</p>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center h-44 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50/50 hover:bg-blue-50/40 hover:border-blue-400 transition">
+                  <Upload className="h-6 w-6 text-slate-400 mb-1" />
+                  <span className="text-xs font-bold text-slate-700">Pilih / Seret Gambar GISTARU</span>
+                  <span className="text-[11px] text-slate-400 mt-0.5">Format JPG, PNG, WEBP (Maks 10MB)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'gistaru')}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Data Penandatangan Dokumen (User & Admin) */}
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
+            <UserCheck className="h-3.5 w-3.5 text-blue-600" />
+            3. Data Penandatangan Dokumen (Dicetak pada Bagian Bawah Halaman 1)
+          </h4>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Dinilai Oleh (User / Analis) */}
+            <div className="rounded-lg border border-slate-200 p-4 bg-slate-50/60 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                <span className="text-xs font-bold text-slate-800">Dinilai Oleh (Analis / User)</span>
+                <span className="text-[10px] uppercase font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+                  Sisi Kiri
+                </span>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Nama Lengkap</label>
+                <input
+                  type="text"
+                  value={penilaiName}
+                  onChange={(e) => setPenilaiName(e.target.value)}
+                  placeholder="user / Nama Analis"
+                  className="w-full rounded border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-800 focus:border-blue-600 focus:outline-none bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Jabatan</label>
+                <input
+                  type="text"
+                  value={penilaiJabatan}
+                  onChange={(e) => setPenilaiJabatan(e.target.value)}
+                  placeholder="jabatan (contoh: Analis Kredit)"
+                  className="w-full rounded border border-slate-300 px-3 py-1.5 text-xs text-slate-700 focus:border-blue-600 focus:outline-none bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Disetujui Oleh (Admin / Reviewer) */}
+            <div className="rounded-lg border border-slate-200 p-4 bg-slate-50/60 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                <span className="text-xs font-bold text-slate-800">Disetujui Oleh (Reviewer / Admin)</span>
+                <span className="text-[10px] uppercase font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                  Sisi Kanan
+                </span>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Nama Lengkap</label>
+                <input
+                  type="text"
+                  value={penyetujuName}
+                  onChange={(e) => setPenyetujuName(e.target.value)}
+                  placeholder="admin_1 / Nama Reviewer"
+                  className="w-full rounded border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-800 focus:border-blue-600 focus:outline-none bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Jabatan</label>
+                <input
+                  type="text"
+                  value={penyetujuJabatan}
+                  onChange={(e) => setPenyetujuJabatan(e.target.value)}
+                  placeholder="jabatan (contoh: Pimpinan Cabang / Reviewer)"
+                  className="w-full rounded border border-slate-300 px-3 py-1.5 text-xs text-slate-700 focus:border-blue-600 focus:outline-none bg-white"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Tombol Unduh */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+          <p className="text-xs text-slate-500">
+            * PDF hasil generate akan memuat tabel penilaian pasar (Hal 1) serta lampiran gambar SHM, GISTARU, dan QR Code (Hal 2).
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel}
+              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 shadow-xs hover:bg-emerald-100 transition disabled:opacity-50"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
+              {isExportingExcel ? 'Menyiapkan Excel…' : 'Unduh Excel (.xlsx)'}
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={isExportingPdf}
+              className="inline-flex items-center gap-2 rounded-md bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition disabled:opacity-50"
+            >
+              <FileText className="h-4 w-4" />
+              {isExportingPdf ? 'Menyiapkan PDF 2 Halaman…' : 'Unduh Laporan PDF (2 Halaman)'}
+            </button>
+          </div>
         </div>
       </section>
 
