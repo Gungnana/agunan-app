@@ -6,6 +6,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Josefin Sans"', 'Inter', 'sans-serif'],
+        josefin: ['"Josefin Sans"', 'sans-serif'],
+      },
       colors: {
         bank: {
           50: '#f0f7ff',

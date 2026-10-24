@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Plus,
   Trash2,
@@ -8,16 +8,14 @@ import {
   Layers,
   FileSpreadsheet,
   FileText,
-  QrCode,
-  Image as ImageIcon,
-  ExternalLink,
   Upload,
-  UserCheck,
   X,
-  MapPin,
   CheckCircle2,
+  MapPin,
+  QrCode,
+  ExternalLink,
+  UserCheck,
 } from 'lucide-react';
-import QRCode from 'qrcode';
 import { useAuth } from '../hooks/useAuth';
 import { exportToExcel, exportToPdf } from '../utils/exportReport';
 
@@ -205,46 +203,21 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
     return nilaiBceTanah + totalNilaiBceBangunan;
   }, [nilaiBceTanah, totalNilaiBceBangunan]);
 
-  // Supporting attachments (SHM Bhumi & GISTARU)
+  // State & Handlers untuk Export Excel dan PDF
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  // Dokumen Pendukung (SHM & GISTARU)
   const [shmImage, setShmImage] = useState<string | null>(null);
   const [shmFileName, setShmFileName] = useState<string | null>(null);
   const [gistaruImage, setGistaruImage] = useState<string | null>(null);
   const [gistaruFileName, setGistaruFileName] = useState<string | null>(null);
 
-  // Signatures (User / Analis & Admin / Reviewer)
-  const [penilaiName, setPenilaiName] = useState<string>(user?.full_name || 'Budi Pratama');
+  // Penandatangan Dokumen (User / Analis & Admin / Reviewer)
+  const [penilaiName, setPenilaiName] = useState<string>(user?.full_name || 'user');
   const [penilaiJabatan, setPenilaiJabatan] = useState<string>('Analis Kredit');
-  const [penyetujuName, setPenyetujuName] = useState<string>('Siti Rahayu');
+  const [penyetujuName, setPenyetujuName] = useState<string>('admin_1');
   const [penyetujuJabatan, setPenyetujuJabatan] = useState<string>('Reviewer Agunan / Pimpinan Cabang');
-
-  // QR Code States
-  const [bhumiQrDataUrl, setBhumiQrDataUrl] = useState<string>('');
-  const [gmapsQrDataUrl, setGmapsQrDataUrl] = useState<string>('');
-
-  const lat = collateralCoordinates?.lat ?? -8.65;
-  const lon = collateralCoordinates?.lon ?? 115.2167;
-  const bhumiUrl = `https://bhumi.atrbpn.go.id/peta?lat=${lat}&lng=${lon}&zoom=18`;
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-
-  useEffect(() => {
-    let isMounted = true;
-    Promise.all([
-      QRCode.toDataURL(bhumiUrl, { margin: 1, width: 256 }),
-      QRCode.toDataURL(googleMapsUrl, { margin: 1, width: 256 }),
-    ])
-      .then(([bUrl, gUrl]) => {
-        if (isMounted) {
-          setBhumiQrDataUrl(bUrl);
-          setGmapsQrDataUrl(gUrl);
-        }
-      })
-      .catch((err) => {
-        console.warn('QR Code generation error:', err);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [bhumiUrl, googleMapsUrl]);
 
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -254,36 +227,24 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
       if (type === 'shm') {
-        setShmImage(result);
+        setShmImage(base64);
         setShmFileName(file.name);
       } else {
-        setGistaruImage(result);
+        setGistaruImage(base64);
         setGistaruFileName(file.name);
       }
     };
     reader.readAsDataURL(file);
   };
 
-  // State & Handlers untuk Export Excel dan PDF
-  const [isExportingExcel, setIsExportingExcel] = useState(false);
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
-
   const getReportData = () => ({
     collateralLocationName: collateralLocationName || 'Area Bali',
     collateralCoordinates: collateralCoordinates || { lat: -8.65, lon: 115.2167 },
     collateralAreaM2,
-    analisName: penilaiName || user?.full_name || 'Budi Pratama (Analis Kredit)',
-    penilaiName,
-    penilaiJabatan,
-    penyetujuName,
-    penyetujuJabatan,
-    shmImageBase64: shmImage,
-    gistaruImageBase64: gistaruImage,
-    googleMapsUrl,
-    bhumiUrl,
+    analisName: penilaiName || user?.full_name || 'user',
     activeTanahPricePerM2,
     activeTanahBcePercent,
     nilaiPasarTanah,
@@ -300,6 +261,14 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
       total: totalScore,
       bcePercent: bcePercentage,
     },
+    shmImageBase64: shmImage,
+    gistaruImageBase64: gistaruImage,
+    penilaiName: penilaiName || user?.full_name || 'user',
+    penilaiJabatan: penilaiJabatan || 'Analis Kredit',
+    penyetujuName: penyetujuName || 'admin_1',
+    penyetujuJabatan: penyetujuJabatan || 'Reviewer Agunan / Pimpinan Cabang',
+    bhumiUrl: `https://bhumi.atrbpn.go.id/peta?lat=${collateralCoordinates?.lat ?? -8.65}&lng=${collateralCoordinates?.lon ?? 115.2167}&zoom=18`,
+    googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${collateralCoordinates?.lat ?? -8.65},${collateralCoordinates?.lon ?? 115.2167}`,
   });
 
   const handleExportExcel = async () => {
@@ -920,106 +889,82 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
         </div>
       </section>
 
-      {/* SECTION LAMPIRAN, QR CODE & PENANDATANGAN DOKUMEN (PDF 2 HALAMAN) */}
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+      {/* SECTION LAMPIRAN DOKUMEN PENDUKUNG & PENANDATANGAN LAPORAN (PDF 2 HALAMAN) */}
+      <section className="rounded-lg border border-slate-300 bg-white p-6 shadow-sm space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <QrCode className="h-4 w-4 text-blue-600" />
-              Lampiran Pendukung, QR Code & Penandatangan Dokumen (Laporan PDF 2 Halaman)
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+              <QrCode className="h-4 w-4 text-blue-700" />
+              Dokumen Pendukung & Penandatangan Laporan (Dicetak pada PDF 2 Halaman)
             </h3>
-            <p className="text-xs text-slate-500">
-              Kelola QR Code lokasi titik agunan, unggah foto pendukung (SHM BHUMI & GISTARU), serta nama penandatangan untuk PDF hasil penilaian.
+            <p className="text-xs text-slate-500 mt-0.5">
+              Kelengkapan foto SHM BHUMI ATR BPN, peta tata ruang GISTARU, QR Code koordinat, serta nama & jabatan penandatangan.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleExportPdf}
-            disabled={isExportingPdf}
-            className="inline-flex items-center gap-2 rounded-md bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition disabled:opacity-50"
-          >
-            <FileText className="h-4 w-4" />
-            {isExportingPdf ? 'Menyiapkan PDF 2 Halaman…' : 'Unduh Laporan PDF (2 Halaman)'}
-          </button>
+          <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+            Halaman 1 & 2 PDF
+          </span>
         </div>
 
-        {/* 1. QR Code Lokasi Agunan */}
+        {/* 1. QR Code Koordinat Agunan */}
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-blue-600" />
-            1. QR Code Lokasi Agunan (Dicetak Otomatis pada Halaman 2)
+            1. QR Code Lokasi Agunan (Otomatis Dibuat pada Bagian Bawah Halaman 2)
           </h4>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/* QR Bhumi ATR BPN */}
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 flex flex-col sm:flex-row items-center gap-4">
-              <div className="bg-white p-2 rounded-md border border-slate-200 shadow-xs flex-shrink-0">
-                {bhumiQrDataUrl ? (
-                  <img src={bhumiQrDataUrl} alt="QR Bhumi ATR BPN" className="h-28 w-28 object-contain" />
-                ) : (
-                  <div className="h-28 w-28 flex items-center justify-center text-slate-400 text-xs">Memuat QR…</div>
-                )}
-              </div>
-              <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
-                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
-                  Bhumi ATR BPN
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Bhumi ATR BPN */}
+            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50/70 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  QR Code Bhumi ATR BPN
                 </span>
-                <p className="text-xs font-semibold text-slate-800 truncate">
-                  Koordinat: {lat}, {lon}
+                <p className="text-[11px] text-slate-500 truncate mt-0.5 font-mono">
+                  https://bhumi.atrbpn.go.id/peta?lat={collateralCoordinates?.lat ?? -8.65}&lng={collateralCoordinates?.lon ?? 115.2167}
                 </p>
-                <p className="text-[11px] text-slate-500 leading-snug">
-                  Memindai QR ini akan langsung membuka peta bidang resmi Bhumi ATR BPN pada koordinat agunan.
-                </p>
-                <a
-                  href={bhumiUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 transition pt-1"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" /> Uji Buka di Bhumi ATR BPN
-                </a>
               </div>
+              <a
+                href={`https://bhumi.atrbpn.go.id/peta?lat=${collateralCoordinates?.lat ?? -8.65}&lng=${collateralCoordinates?.lon ?? 115.2167}&zoom=18`}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:text-blue-600 hover:border-blue-400 transition"
+              >
+                Uji Tautan <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
 
-            {/* QR Google Maps */}
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 flex flex-col sm:flex-row items-center gap-4">
-              <div className="bg-white p-2 rounded-md border border-slate-200 shadow-xs flex-shrink-0">
-                {gmapsQrDataUrl ? (
-                  <img src={gmapsQrDataUrl} alt="QR Google Maps" className="h-28 w-28 object-contain" />
-                ) : (
-                  <div className="h-28 w-28 flex items-center justify-center text-slate-400 text-xs">Memuat QR…</div>
-                )}
-              </div>
-              <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
-                <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800">
-                  Google Maps
+            {/* Google Maps */}
+            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50/70 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  QR Code Google Maps
                 </span>
-                <p className="text-xs font-semibold text-slate-800 truncate">
-                  Titik Pin: {lat}, {lon}
+                <p className="text-[11px] text-slate-500 truncate mt-0.5 font-mono">
+                  https://maps.google.com/?q={collateralCoordinates?.lat ?? -8.65},{collateralCoordinates?.lon ?? 115.2167}
                 </p>
-                <p className="text-[11px] text-slate-500 leading-snug">
-                  Memindai QR ini akan membuka lokasi titik peninjauan di aplikasi atau browser Google Maps.
-                </p>
-                <a
-                  href={googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 transition pt-1"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" /> Uji Buka di Google Maps
-                </a>
               </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${collateralCoordinates?.lat ?? -8.65},${collateralCoordinates?.lon ?? 115.2167}`}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:text-blue-600 hover:border-blue-400 transition"
+              >
+                Uji Tautan <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           </div>
         </div>
 
-        {/* 2. Unggah Foto Pendukung */}
+        {/* 2. Unggah Foto Pendukung (SHM & GISTARU) */}
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
-            <ImageIcon className="h-3.5 w-3.5 text-blue-600" />
-            2. Foto Pendukung Lampiran (Dicetak pada Halaman 2)
+            <Upload className="h-3.5 w-3.5 text-blue-600" />
+            2. Foto Pendukung Agunan (Dicetak pada Kotak Gambar Halaman 2)
           </h4>
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* Upload SHM BHUMI ATR BPN */}
+            {/* Upload SHM */}
             <div className="rounded-lg border border-slate-200 p-4 bg-white">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -1040,14 +985,14 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
               {shmImage ? (
                 <div className="space-y-2">
                   <div className="relative h-44 w-full rounded border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
-                    <img src={shmImage} alt="SHM BHUMI Preview" className="h-full w-full object-contain" />
+                    <img src={shmImage} alt="SHM Preview" className="h-full w-full object-contain" />
                   </div>
                   <p className="text-[11px] text-slate-500 truncate">Berkas: {shmFileName}</p>
                 </div>
               ) : (
                 <label className="flex flex-col items-center justify-center h-44 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50/50 hover:bg-blue-50/40 hover:border-blue-400 transition">
                   <Upload className="h-6 w-6 text-slate-400 mb-1" />
-                  <span className="text-xs font-bold text-slate-700">Pilih / Seret Gambar SHM</span>
+                  <span className="text-xs font-bold text-slate-700">Pilih / Seret Gambar SHM ATR BPN</span>
                   <span className="text-[11px] text-slate-400 mt-0.5">Format JPG, PNG, WEBP (Maks 10MB)</span>
                   <input
                     type="file"
@@ -1170,10 +1115,10 @@ export const BceCalculator: React.FC<BceCalculatorProps> = ({
           </div>
         </div>
 
-        {/* Footer Tombol Unduh */}
+        {/* Footer Tombol Unduh Laporan */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
           <p className="text-xs text-slate-500">
-            * PDF hasil generate akan memuat tabel penilaian pasar (Hal 1) serta lampiran gambar SHM, GISTARU, dan QR Code (Hal 2).
+            * PDF hasil cetak akan memuat tabel penilaian pasar (Hal 1) serta lampiran foto SHM, GISTARU, dan QR Code (Hal 2).
           </p>
           <div className="flex items-center gap-2">
             <button
